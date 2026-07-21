@@ -1,0 +1,389 @@
+# =============================================================================
+# Auto Cost Engine — Production Docker Compose
+# =============================================================================
+# Usage:
+#   docker compose -f infra/docker-compose.prod.yml up -d
+#   docker compose -f infra/docker-compose.prod.yml down
+#
+# Prerequisites:
+#   - .env.prod file in project root with all secrets defined
+#   - Domain name pointed at the server (for Let's Encrypt TLS)
+#   - Ports 80 and 443 open in the firewall
+# =============================================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 15s
+  timeout: 10s
+  retries: 5
+  start_period: 20s
+
+networks:
+  # Internal network — no external access
+  prod-network:
+    driver: bridge
+    internal: true
+    labels:
+      app: "ace"
+      tier: "internal"
+
+  # Public-facing proxy network — Caddy + frontend only
+  proxy-network:
+    driver: bridge
+    labels:
+      app: "ace"
+      tier: "public"
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL (pgvector-enabled)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg16@sha256:1d533553fefe4f12e5d80c7b80622ba0c382abb5758856f52983d8789179f0fb
+    container_name: ace-postgres
+    restart: unless-stopped
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_DB: estimation
+      POSTGRES_USER: estimation
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U estimation"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    logging: *default-logging
+    networks:
+      - prod-network
+
+  # ---------------------------------------------------------------------------
+  # MinIO Object Storage
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    container_name: ace-minio
+    restart: unless-stopped
+    command: server /data --console-address :9001
+    expose:
+      - "9000"
+      - "9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    logging: *default-logging
+    networks:
+      - prod-network
+
+  # ---------------------------------------------------------------------------
+  # Redis (cache + Celery broker)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    container_name: ace-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    logging: *default-logging
+    networks:
+      - prod-network
+
+  # ---------------------------------------------------------------------------
+  # Keycloak (Authentication / SSO)
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0@sha256:82c5b7a110456dbd42b86ea572e728878549954cc8bd03cd65410d75328095d2
+    container_name: ace-keycloak
+    restart: unless-stopped
+    command: start --import-realm
+    expose:
+      - "8080"
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_USERNAME: estimation
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      KC_DB_URL_DATABASE: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:?KEYCLOAK_HOSTNAME is required}
+      KC_HOSTNAME_ADMIN_URL: https://${KEYCLOAK_HOSTNAME:?KEYCLOAK_HOSTNAME is required}
+      KC_HTTPS_PORT: 443
+      KC_PROXY: passthrough
+      KC_LOG_LEVEL: INFO
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 512M
+    logging: *default-logging
+    networks:
+      - prod-network
+
+  # ---------------------------------------------------------------------------
+  # Backend (FastAPI)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: ace-backend
+    restart: unless-stopped
+    expose:
+      - "8000"
+    env_file:
+      - ../.env.prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    logging: *default-logging
+    networks:
+      - prod-network
+      - proxy-network
+
+  # ---------------------------------------------------------------------------
+  # Celery Worker (async task processing)
+  # ---------------------------------------------------------------------------
+  celery-worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: ace-celery-worker
+    restart: unless-stopped
+    # Override CMD from Dockerfile: entrypoint runs migrations, then exec celery
+    command: celery -A app.celery_app worker -l info --concurrency=4
+    env_file:
+      - ../.env.prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.celery_app inspect ping -d celery@$$HOSTNAME || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    logging: *default-logging
+    networks:
+      - prod-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend (Vite SPA — served by Caddy file-server)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: ace-frontend
+    restart: unless-stopped
+    expose:
+      - "5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    logging: *default-logging
+    networks:
+      - proxy-network
+
+  # ---------------------------------------------------------------------------
+  # Caddy (Reverse Proxy / TLS Termination)
+  # ---------------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    container_name: ace-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN is required}
+      ADMIN_EMAIL: ${ACME_EMAIL:-admin@${DOMAIN}}
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    logging: *default-logging
+    networks:
+      - proxy-network
+
+  # ---------------------------------------------------------------------------
+  # Database Backup Cron (daily at 2 AM → MinIO)
+  # ---------------------------------------------------------------------------
+  db-backup:
+    build:
+      context: ../scripts
+      dockerfile: Dockerfile.backup
+    container_name: ace-db-backup
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://estimation:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/estimation"
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ALIAS: "ace-minio"
+      MINIO_BACKUP_BUCKET: "ace-backups"
+      RETENTION_DAYS: "7"
+      RETENTION_WEEKS: "4"
+      RETENTION_MONTHS: "3"
+    volumes:
+      - backups_log:/var/log
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    logging: *default-logging
+    networks:
+      - prod-network
+
+volumes:
+  pgdata:
+    labels:
+      app: "ace"
+      service: "postgres"
+      backup: "critical"
+      description: "PostgreSQL database data — backup daily"
+  minio_data:
+    labels:
+      app: "ace"
+      service: "minio"
+      backup: "important"
+      description: "MinIO object storage"
+  redis_data:
+    labels:
+      app: "ace"
+      service: "redis"
+      backup: "non-critical"
+      description: "Redis cache data (can be rebuilt)"
+  caddy_data:
+    labels:
+      app: "ace"
+      service: "caddy"
+  caddy_config:
+    labels:
+      app: "ace"
+      service: "caddy"
+  backups_log:
+    labels:
+      app: "ace"
+      service: "backup"
+      description: "Backup cron container logs"

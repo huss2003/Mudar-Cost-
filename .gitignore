@@ -1,0 +1,43 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+*.db
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+frontend/build/
+.npm/
+
+# Docker
+.env
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Project-specific
+uploads/*
+
+# Keep .env.example
+!.env.example

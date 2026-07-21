@@ -1,0 +1,154 @@
+# Auto Cost Engine — Labour Rate Database
+# Standard daily labour rates for interior fit-out trades in India (Mumbai/Bengaluru market)
+# All rates in INR per day unless otherwise noted
+
+rules:
+  - trade: glass
+    description: "Glass Installer"
+    skill_level: skilled
+    unit: day
+    basic_rate: 1200
+    hra: 0
+    conveyance: 100
+    food_allowance: 100
+    insurance: 50
+    other_allowances: 50
+    total_rate: 1500
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "Toughened glass, frameless glass and mirror installation"
+
+  - trade: painting
+    description: "Painter"
+    skill_level: skilled
+    unit: day
+    basic_rate: 800
+    hra: 0
+    conveyance: 50
+    food_allowance: 100
+    insurance: 30
+    other_allowances: 20
+    total_rate: 1000
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "Putty, primer, emulsion and enamel painting"
+
+  - trade: ceiling
+    description: "Ceiling Installer"
+    skill_level: skilled
+    unit: day
+    basic_rate: 1000
+    hra: 0
+    conveyance: 50
+    food_allowance: 100
+    insurance: 30
+    other_allowances: 20
+    total_rate: 1200
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "Grid ceiling, gypsum ceiling and POP work"
+
+  - trade: electrical
+    description: "Electrician"
+    skill_level: skilled
+    unit: day
+    basic_rate: 1500
+    hra: 0
+    conveyance: 100
+    food_allowance: 100
+    insurance: 50
+    other_allowances: 50
+    total_rate: 1800
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "Point wiring, DB installation, light fixtures. Point rate available at ₹350/point"
+
+  - trade: hvac
+    description: "HVAC Technician"
+    skill_level: skilled
+    unit: day
+    basic_rate: 1800
+    hra: 0
+    conveyance: 100
+    food_allowance: 150
+    insurance: 50
+    other_allowances: 50
+    total_rate: 2150
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "Split AC, cassette AC installation and servicing"
+
+  - trade: carpentry
+    description: "Carpenter"
+    skill_level: skilled
+    unit: day
+    basic_rate: 1200
+    hra: 0
+    conveyance: 50
+    food_allowance: 100
+    insurance: 30
+    other_allowances: 20
+    total_rate: 1400
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "Door installation, furniture assembly, paneling, framework"
+
+  - trade: plumbing
+    description: "Plumber"
+    skill_level: skilled
+    unit: day
+    basic_rate: 1500
+    hra: 0
+    conveyance: 100
+    food_allowance: 100
+    insurance: 50
+    other_allowances: 50
+    total_rate: 1800
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "CPVC piping, sanitaryware installation, drainage"
+
+  - trade: flooring
+    description: "Flooring Installer"
+    skill_level: semi-skilled
+    unit: day
+    basic_rate: 1000
+    hra: 0
+    conveyance: 50
+    food_allowance: 100
+    insurance: 30
+    other_allowances: 20
+    total_rate: 1200
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "Tile laying, carpet, vinyl, laminate flooring installation"
+
+  - trade: general
+    description: "Helper"
+    skill_level: unskilled
+    unit: day
+    basic_rate: 600
+    hra: 0
+    conveyance: 0
+    food_allowance: 100
+    insurance: 20
+    other_allowances: 0
+    total_rate: 720
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "General labour, material handling, cleaning"
+
+  - trade: general
+    description: "Supervisor"
+    skill_level: supervisor
+    unit: day
+    basic_rate: 2500
+    hra: 200
+    conveyance: 200
+    food_allowance: 200
+    insurance: 100
+    other_allowances: 100
+    total_rate: 3300
+    effective_date: "2026-04-01"
+    is_union_rate: false
+    notes: "Site supervisor overseeing 2-3 crews, quality inspection, material coordination"

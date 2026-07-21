@@ -1,0 +1,835 @@
+# Auto Cost Engine — Material Catalog
+# 35+ real construction materials with Indian market pricing
+# All rates in INR, mapping to the Material model
+
+materials:
+  # ===== GLASS =====
+  - name: "Toughened Glass 12mm Clear"
+    brand: "Saint Gobain"
+    category: "glass"
+    subcategory: "toughened_glass"
+    sku: "SG-TG-12-CLR"
+    hsn_code: "70071900"
+    gst_rate: 18
+    rate: 320.0
+    unit: "sqft"
+    vendor_id_ref: "SG001"
+    lead_time_days: 7
+    min_order_qty: 50
+    warranty: "5 years"
+    fire_rating: "Class A"
+    description: "12mm clear toughened glass for partitions and doors. Heat soaked, EN 12150 certified."
+    tags: ["glass", "toughened", "partition"]
+
+  - name: "Modiguard Toughened Glass 12mm"
+    brand: "Modiguard"
+    category: "glass"
+    subcategory: "toughened_glass"
+    sku: "MG-TG-12-CLR"
+    hsn_code: "70071900"
+    gst_rate: 18
+    rate: 280.0
+    unit: "sqft"
+    vendor_id_ref: "MG001"
+    lead_time_days: 5
+    min_order_qty: 100
+    warranty: "5 years"
+    description: "12mm toughened glass with edge-polished finish for partitions"
+    tags: ["glass", "toughened"]
+
+  - name: "AIS Clear Toughened Glass 12mm"
+    brand: "AIS"
+    category: "glass"
+    subcategory: "toughened_glass"
+    sku: "AIS-TG-12-CLR"
+    hsn_code: "70071900"
+    gst_rate: 18
+    rate: 360.0
+    unit: "sqft"
+    vendor_id_ref: "AIS001"
+    lead_time_days: 7
+    min_order_qty: 30
+    warranty: "5 years"
+    description: "Premium clear toughened glass from Asahi India, high clarity"
+    tags: ["glass", "toughened"]
+
+  - name: "Laminated Glass 12mm Clear"
+    brand: "Saint Gobain"
+    category: "glass"
+    subcategory: "laminated_glass"
+    sku: "SG-LM-12-CLR"
+    hsn_code: "70072900"
+    gst_rate: 18
+    rate: 120.0
+    unit: "sqft"
+    vendor_id_ref: "SG001"
+    lead_time_days: 10
+    min_order_qty: 30
+    warranty: "5 years"
+    fire_rating: "Class A"
+    description: "12mm laminated safety glass with PVB interlayer for enhanced safety"
+    tags: ["glass", "laminated", "safety"]
+
+  - name: "Mirror Glass 6mm Silver"
+    brand: "Modiguard"
+    category: "glass"
+    subcategory: "mirror_glass"
+    sku: "MG-MR-6-SLV"
+    hsn_code: "70099100"
+    gst_rate: 18
+    rate: 65.0
+    unit: "sqft"
+    vendor_id_ref: "MG001"
+    lead_time_days: 5
+    min_order_qty: 50
+    warranty: "3 years"
+    description: "6mm silver back mirror glass with anti-corrosion backing"
+    tags: ["glass", "mirror"]
+
+  # ===== CARPET =====
+  - name: "Interface Modular Carpet Tile 500×500mm"
+    brand: "Interface"
+    category: "flooring"
+    subcategory: "carpet_tile"
+    sku: "IF-CT-5050"
+    hsn_code: "57050039"
+    gst_rate: 18
+    rate: 180.0
+    unit: "sqft"
+    vendor_id_ref: "IF001"
+    lead_time_days: 14
+    min_order_qty: 500
+    warranty: "10 years"
+    fire_rating: "Class 1"
+    description: "Modular carpet tiles 500×500mm, loop pile, 15 colors, heavy commercial grade"
+    tags: ["carpet", "tile", "commercial"]
+
+  - name: "Milliken Broadloom Carpet"
+    brand: "Milliken"
+    category: "flooring"
+    subcategory: "carpet"
+    sku: "MI-BL-4M"
+    hsn_code: "57050039"
+    gst_rate: 18
+    rate: 220.0
+    unit: "sqft"
+    vendor_id_ref: "MI001"
+    lead_time_days: 21
+    min_order_qty: 300
+    warranty: "10 years"
+    fire_rating: "Class 1"
+    description: "Broadloom carpet 4m width, tufted loop pile, heavy commercial grade"
+    tags: ["carpet", "broadloom"]
+
+  - name: "Tarkett Vinyl Sheet Flooring 2mm"
+    brand: "Tarkett"
+    category: "flooring"
+    subcategory: "vinyl_sheet"
+    sku: "TK-VS-2MM"
+    hsn_code: "39181090"
+    gst_rate: 18
+    rate: 160.0
+    unit: "sqft"
+    vendor_id_ref: "TK001"
+    lead_time_days: 21
+    min_order_qty: 500
+    warranty: "10 years"
+    fire_rating: "Class Bfl-s1"
+    description: "Heterogeneous vinyl sheet 2mm, homogeneous wear layer 0.55mm, 4m width"
+    tags: ["vinyl", "flooring", "sheet"]
+
+  - name: "Armstrong LVTP Flooring"
+    brand: "Armstrong"
+    category: "flooring"
+    subcategory: "vinyl_tile"
+    sku: "AW-LVTP-4MM"
+    hsn_code: "39181090"
+    gst_rate: 18
+    rate: 195.0
+    unit: "sqft"
+    vendor_id_ref: "TK001"
+    lead_time_days: 14
+    min_order_qty: 300
+    warranty: "15 years"
+    description: "Luxury vinyl tile plank, 4mm thickness, rigid core, click-lock system"
+    tags: ["vinyl", "lvp", "flooring"]
+
+  - name: "Shaw Carpet Tile 600×600mm"
+    brand: "Shaw"
+    category: "flooring"
+    subcategory: "carpet_tile"
+    sku: "SW-CT-6060"
+    hsn_code: "57050039"
+    gst_rate: 18
+    rate: 150.0
+    unit: "sqft"
+    vendor_id_ref: "IF001"
+    lead_time_days: 14
+    min_order_qty: 400
+    warranty: "10 years"
+    description: "Modular carpet tile 600×600mm, solution-dyed nylon, stain resistant"
+    tags: ["carpet", "tile"]
+
+  - name: "Welpun Polyester Carpet"
+    brand: "Welpun"
+    category: "flooring"
+    subcategory: "carpet"
+    sku: "WP-CT-110"
+    hsn_code: "57033000"
+    gst_rate: 18
+    rate: 110.0
+    unit: "sqft"
+    vendor_id_ref: "MI001"
+    lead_time_days: 10
+    min_order_qty: 500
+    warranty: "5 years"
+    description: "Polyester tufted broadloom carpet, economy grade for large areas"
+    tags: ["carpet", "broadloom"]
+
+  # ===== WORKSTATIONS =====
+  - name: "Godrej Interio Modular Workstation 1500×1500mm"
+    brand: "Godrej Interio"
+    category: "furniture"
+    subcategory: "workstation"
+    sku: "GI-WS-1515-MOD"
+    hsn_code: "94033090"
+    gst_rate: 18
+    rate: 45000.0
+    unit: "station"
+    vendor_id_ref: "GI001"
+    lead_time_days: 10
+    min_order_qty: 5
+    warranty: "5 years"
+    description: "Modular workstation 1500×1500mm with 1200mm panel, cable management"
+    tags: ["workstation", "furniture"]
+
+  - name: "Featherlite Matrix Workstation"
+    brand: "Featherlite"
+    category: "furniture"
+    subcategory: "workstation"
+    sku: "FL-MTX-1515"
+    hsn_code: "94033090"
+    gst_rate: 18
+    rate: 38000.0
+    unit: "station"
+    vendor_id_ref: "FL001"
+    lead_time_days: 14
+    min_order_qty: 10
+    warranty: "5 years"
+    description: "Matrix system modular workstation, 1500×1500mm, with storage"
+    tags: ["workstation", "furniture"]
+
+  - name: "Haworth Premium Workstation"
+    brand: "Haworth"
+    category: "furniture"
+    subcategory: "workstation"
+    sku: "HW-PRM-1515"
+    hsn_code: "94033090"
+    gst_rate: 18
+    rate: 65000.0
+    unit: "station"
+    vendor_id_ref: "HW001"
+    lead_time_days: 21
+    min_order_qty: 5
+    warranty: "10 years"
+    description: "Premium height-adjustable workstation with integrated power/data"
+    tags: ["workstation", "premium"]
+
+  - name: "Steelcase Gesture Chair"
+    brand: "Steelcase"
+    category: "furniture"
+    subcategory: "seating"
+    sku: "SC-GESTURE"
+    hsn_code: "94017100"
+    gst_rate: 18
+    rate: 78000.0
+    unit: "nos"
+    vendor_id_ref: "HW001"
+    lead_time_days: 28
+    min_order_qty: 2
+    warranty: "12 years"
+    description: "Premium ergonomic chair with 3D LiveBack technology, 4D armrests"
+    tags: ["seating", "ergonomic", "premium"]
+
+  # ===== GYPSUM =====
+  - name: "Saint Gobain Gyproc 12.5mm Board"
+    brand: "Saint Gobain Gyproc"
+    category: "gypsum"
+    subcategory: "gypsum_board"
+    sku: "SGG-GB-12.5-STD"
+    hsn_code: "68091100"
+    gst_rate: 18
+    rate: 85.0
+    unit: "sqft"
+    vendor_id_ref: "SGG001"
+    lead_time_days: 5
+    min_order_qty: 500
+    warranty: "5 years"
+    fire_rating: "Class 1"
+    description: "Standard 12.5mm gypsum board 1200×2400mm for walls and ceilings"
+    tags: ["gypsum", "partition"]
+
+  - name: "Gyproc Fireline 12.5mm Board"
+    brand: "Saint Gobain Gyproc"
+    category: "gypsum"
+    subcategory: "gypsum_board"
+    sku: "SGG-FL-12.5"
+    hsn_code: "68091100"
+    gst_rate: 18
+    rate: 110.0
+    unit: "sqft"
+    vendor_id_ref: "SGG001"
+    lead_time_days: 7
+    min_order_qty: 200
+    warranty: "5 years"
+    fire_rating: "Class A (2hr)"
+    description: "Fireline gypsum board 12.5mm, 2-hour fire rating, glass fiber reinforced"
+    tags: ["gypsum", "fire_rated"]
+
+  - name: "Metal Stud 75mm 3000mm"
+    brand: "Saint Gobain Gyproc"
+    category: "metal"
+    subcategory: "galvanized"
+    sku: "SGG-MS-75-3M"
+    hsn_code: "73089090"
+    gst_rate: 18
+    rate: 185.0
+    unit: "nos"
+    vendor_id_ref: "SGG001"
+    lead_time_days: 5
+    min_order_qty: 50
+    description: "Galvanized metal stud 75mm × 3000mm for partition framing"
+    tags: ["metal", "stud"]
+
+  - name: "Channel 75mm 3000mm"
+    brand: "Saint Gobain Gyproc"
+    category: "metal"
+    subcategory: "galvanized"
+    sku: "SGG-CH-75-3M"
+    hsn_code: "73089090"
+    gst_rate: 18
+    rate: 165.0
+    unit: "nos"
+    vendor_id_ref: "SGG001"
+    lead_time_days: 5
+    min_order_qty: 50
+    description: "Galvanized channel 75mm × 3000mm top/bottom track for partitions"
+    tags: ["metal", "channel"]
+
+  # ===== PAINT =====
+  - name: "Asian Paints Royale Luxury Emulsion"
+    brand: "Asian Paints"
+    category: "paint"
+    subcategory: "interior_emulsion"
+    sku: "AP-ROY-20L"
+    hsn_code: "32091000"
+    gst_rate: 18
+    rate: 35.0
+    unit: "sqft"
+    vendor_id_ref: "AP001"
+    lead_time_days: 3
+    min_order_qty: 10
+    warranty: "7 years"
+    description: "Royale Shyne Luxury Emulsion, 20L bucket coverage ~400 sqft/L/coat"
+    tags: ["paint", "emulsion"]
+
+  - name: "Berger Luxor Emulsion"
+    brand: "Berger"
+    category: "paint"
+    subcategory: "interior_emulsion"
+    sku: "BP-LUX-20L"
+    hsn_code: "32091000"
+    gst_rate: 18
+    rate: 28.0
+    unit: "sqft"
+    vendor_id_ref: "AP001"
+    lead_time_days: 5
+    min_order_qty: 20
+    warranty: "5 years"
+    description: "Luxor velvet finish interior emulsion, 20L bucket"
+    tags: ["paint", "emulsion"]
+
+  - name: "Nerolac Impressions Emulsion"
+    brand: "Nerolac"
+    category: "paint"
+    subcategory: "interior_emulsion"
+    sku: "NL-IMP-20L"
+    hsn_code: "32091000"
+    gst_rate: 18
+    rate: 22.0
+    unit: "sqft"
+    vendor_id_ref: "AP001"
+    lead_time_days: 5
+    min_order_qty: 20
+    warranty: "5 years"
+    description: "Impressions interior emulsion, good quality economy range"
+    tags: ["paint", "emulsion"]
+
+  - name: "Asian Paints Water Based Primer"
+    brand: "Asian Paints"
+    category: "paint"
+    subcategory: "primer"
+    sku: "AP-PR-20L"
+    hsn_code: "32091000"
+    gst_rate: 18
+    rate: 2800.0
+    unit: "nos"
+    vendor_id_ref: "AP001"
+    lead_time_days: 3
+    min_order_qty: 5
+    description: "Water-based primer undercoat, 20L bucket, for interior walls"
+    tags: ["primer"]
+
+  - name: "Asian Paints Wall Care Putty 20kg"
+    brand: "Asian Paints"
+    category: "paint"
+    subcategory: "putty"
+    sku: "AP-WP-20KG"
+    hsn_code: "32149090"
+    gst_rate: 18
+    rate: 650.0
+    unit: "bag"
+    vendor_id_ref: "AP001"
+    lead_time_days: 3
+    min_order_qty: 10
+    description: "Waterproof wall care putty, white cement based, 20kg bag"
+    tags: ["putty", "finish"]
+
+  # ===== FLOORING TILES =====
+  - name: "Kajaria Vitrified Tile 600×600mm"
+    brand: "Kajaria"
+    category: "tiling"
+    subcategory: "vitrified_tile"
+    sku: "KJ-VT-6060"
+    hsn_code: "69089090"
+    gst_rate: 18
+    rate: 55.0
+    unit: "sqft"
+    vendor_id_ref: "KJ001"
+    lead_time_days: 5
+    min_order_qty: 500
+    warranty: "10 years"
+    description: "Double charge vitrified tiles 600×600mm, polished finish"
+    tags: ["tile", "vitrified"]
+
+  - name: "Somany Digital Vitrified 600×600mm"
+    brand: "Somany"
+    category: "tiling"
+    subcategory: "vitrified_tile"
+    sku: "SM-DV-6060"
+    hsn_code: "69089090"
+    gst_rate: 18
+    rate: 48.0
+    unit: "sqft"
+    vendor_id_ref: "KJ001"
+    lead_time_days: 7
+    min_order_qty: 300
+    warranty: "10 years"
+    description: "Digital vitrified tiles, high-definition print, 600×600mm"
+    tags: ["tile", "vitrified"]
+
+  - name: "Nitco Glazed Vitrified 600×600mm"
+    brand: "Nitco"
+    category: "tiling"
+    subcategory: "vitrified_tile"
+    sku: "NT-GV-6060"
+    hsn_code: "69089090"
+    gst_rate: 18
+    rate: 52.0
+    unit: "sqft"
+    vendor_id_ref: "KJ001"
+    lead_time_days: 5
+    min_order_qty: 400
+    warranty: "10 years"
+    description: "Glazed vitrified tiles, glossy finish, 600×600mm"
+    tags: ["tile", "vitrified"]
+
+  # ===== CEILING =====
+  - name: "Armstrong Grid Ceiling 600×600mm"
+    brand: "Armstrong"
+    category: "ceiling"
+    subcategory: "grid_ceiling"
+    sku: "AW-GRID-6060"
+    hsn_code: "68091100"
+    gst_rate: 18
+    rate: 95.0
+    unit: "sqft"
+    vendor_id_ref: "SGG001"
+    lead_time_days: 7
+    min_order_qty: 500
+    warranty: "10 years"
+    description: "Mineral fiber grid ceiling tile 600×600mm, acoustic rated"
+    tags: ["ceiling", "acoustic"]
+
+  - name: "Saint Gobain Gypsum Ceiling Board 12.5mm"
+    brand: "Saint Gobain Gyproc"
+    category: "gypsum"
+    subcategory: "gypsum_board"
+    sku: "SGG-CB-12.5"
+    hsn_code: "68091100"
+    gst_rate: 18
+    rate: 75.0
+    unit: "sqft"
+    vendor_id_ref: "SGG001"
+    lead_time_days: 5
+    min_order_qty: 300
+    warranty: "5 years"
+    description: "Gypsum ceiling board 12.5mm for false ceiling applications"
+    tags: ["ceiling", "gypsum"]
+
+  # ===== ELECTRICAL =====
+  - name: "Legrand Modular Switch Point"
+    brand: "Legrand"
+    category: "electrical"
+    subcategory: "switches"
+    sku: "LG-SW-PT"
+    hsn_code: "85369090"
+    gst_rate: 18
+    rate: 35.0
+    unit: "point"
+    vendor_id_ref: "LG001"
+    lead_time_days: 5
+    min_order_qty: 100
+    warranty: "2 years"
+    description: "Complete modular switch point with plate and mechanism, Mystic White"
+    tags: ["switch", "electrical"]
+
+  - name: "Anchor Roma Modular Switch"
+    brand: "Anchor"
+    category: "electrical"
+    subcategory: "switches"
+    sku: "AN-RM-PT"
+    hsn_code: "85369090"
+    gst_rate: 18
+    rate: 25.0
+    unit: "point"
+    vendor_id_ref: "LG001"
+    lead_time_days: 5
+    min_order_qty: 100
+    warranty: "2 years"
+    description: "Roma series modular switch point, economical range"
+    tags: ["switch", "electrical"]
+
+  - name: "Philips LED Downlight 12W"
+    brand: "Philips"
+    category: "electrical"
+    subcategory: "lighting"
+    sku: "PH-DL-12W"
+    hsn_code: "94051100"
+    gst_rate: 18
+    rate: 1200.0
+    unit: "piece"
+    vendor_id_ref: "LG001"
+    lead_time_days: 3
+    min_order_qty: 20
+    warranty: "3 years"
+    description: "12W warm white LED downlight, recessed, 1200lm, 3000K"
+    tags: ["lighting", "led"]
+
+  - name: "PVC Conduit Pipe 20mm 3m"
+    brand: "Legrand"
+    category: "electrical"
+    subcategory: "pvc_conduit"
+    sku: "LG-PC-20-3M"
+    hsn_code: "85469010"
+    gst_rate: 18
+    rate: 75.0
+    unit: "nos"
+    vendor_id_ref: "LG001"
+    lead_time_days: 5
+    min_order_qty: 50
+    description: "PVC conduit pipe 20mm OD, 3m length, ISI marked"
+    tags: ["conduit", "electrical"]
+
+  # ===== HVAC =====
+  - name: "Daikin 1.5TR Split AC"
+    brand: "Daikin"
+    category: "hvac"
+    subcategory: "split_ac"
+    sku: "DK-1.5TR-SPL"
+    hsn_code: "84151010"
+    gst_rate: 28
+    rate: 42000.0
+    unit: "piece"
+    vendor_id_ref: "DK001"
+    lead_time_days: 3
+    min_order_qty: 2
+    warranty: "5 years"
+    description: "1.5TR split air conditioner, 5-star energy rating, inverter, R32"
+    tags: ["hvac", "ac"]
+
+  - name: "Voltas 2TR Split AC"
+    brand: "Voltas"
+    category: "hvac"
+    subcategory: "split_ac"
+    sku: "VT-2TR-SPL"
+    hsn_code: "84151010"
+    gst_rate: 28
+    rate: 38000.0
+    unit: "piece"
+    vendor_id_ref: "DK001"
+    lead_time_days: 5
+    min_order_qty: 2
+    warranty: "5 years"
+    description: "2TR split air conditioner, 4-star energy rating, inverter"
+    tags: ["hvac", "ac"]
+
+  - name: "Blue Star Cassette AC 2TR"
+    brand: "Blue Star"
+    category: "hvac"
+    subcategory: "cassette_ac"
+    sku: "BS-CS-2TR"
+    hsn_code: "84151010"
+    gst_rate: 28
+    rate: 55000.0
+    unit: "piece"
+    vendor_id_ref: "DK001"
+    lead_time_days: 7
+    min_order_qty: 2
+    warranty: "5 years"
+    description: "2TR cassette type air conditioner, 4-way airflow, inverter"
+    tags: ["hvac", "ac", "cassette"]
+
+  # ===== PLUMBING =====
+  - name: "Jaguar CPVC Pipe 20mm"
+    brand: "Jaguar"
+    category: "plumbing"
+    subcategory: "cpvc_pipe"
+    sku: "JG-CPVC-20"
+    hsn_code: "39172200"
+    gst_rate: 18
+    rate: 45.0
+    unit: "piece"
+    vendor_id_ref: "HN001"
+    lead_time_days: 5
+    min_order_qty: 50
+    warranty: "10 years"
+    description: "CPVC pipe 20mm, 3m length, ISI marked, for hot/cold water"
+    tags: ["plumbing", "pipe"]
+
+  - name: "Hindware Sanitary WC Set"
+    brand: "Hindware"
+    category: "plumbing"
+    subcategory: "sanitaryware"
+    sku: "HN-WC-SET"
+    hsn_code: "69101000"
+    gst_rate: 18
+    rate: 3500.0
+    unit: "set"
+    vendor_id_ref: "HN001"
+    lead_time_days: 7
+    min_order_qty: 10
+    warranty: "5 years"
+    description: "Water closet set with seat cover and flush tank, standard white"
+    tags: ["sanitaryware"]
+
+  - name: "Cera Washbasin 600×450mm"
+    brand: "Cera"
+    category: "plumbing"
+    subcategory: "sanitaryware"
+    sku: "CR-WB-6045"
+    hsn_code: "69101000"
+    gst_rate: 18
+    rate: 2800.0
+    unit: "piece"
+    vendor_id_ref: "HN001"
+    lead_time_days: 7
+    min_order_qty: 10
+    warranty: "5 years"
+    description: "Vitreous china wall-mounted washbasin 600×450mm with overflow"
+    tags: ["sanitaryware"]
+
+  # ===== HARDWARE =====
+  - name: "Godrej Mortise Lock"
+    brand: "Godrej"
+    category: "hardware"
+    subcategory: "door_lock"
+    sku: "GD-ML-850"
+    hsn_code: "83014011"
+    gst_rate: 18
+    rate: 850.0
+    unit: "piece"
+    vendor_id_ref: "GI001"
+    lead_time_days: 3
+    min_order_qty: 10
+    warranty: "5 years"
+    description: "Standard mortise lock for wooden doors, 5 lever, nickel finish"
+    tags: ["hardware", "lock"]
+
+  - name: "Hettich Hinges 100mm"
+    brand: "Hettich"
+    category: "hardware"
+    subcategory: "hinges"
+    sku: "HT-HG-100"
+    hsn_code: "83021010"
+    gst_rate: 18
+    rate: 120.0
+    unit: "pair"
+    vendor_id_ref: "GI001"
+    lead_time_days: 5
+    min_order_qty: 20
+    warranty: "10 years"
+    description: "SS butt hinges 100mm × 75mm for wooden doors and cabinets"
+    tags: ["hardware", "hinges"]
+
+  - name: "Ebco Drawer Slide 450mm"
+    brand: "Ebco"
+    category: "hardware"
+    subcategory: "drawer_slide"
+    sku: "EB-DS-450"
+    hsn_code: "83024200"
+    gst_rate: 18
+    rate: 350.0
+    unit: "set"
+    vendor_id_ref: "GI001"
+    lead_time_days: 5
+    min_order_qty: 20
+    warranty: "5 years"
+    description: "Ball bearing drawer slide 450mm, 35kg load capacity, full extension"
+    tags: ["hardware", "drawer"]
+
+  # ===== FURNITURE MATERIALS =====
+  - name: "Greenply Plywood 18mm"
+    brand: "Greenply"
+    category: "wood"
+    subcategory: "plywood"
+    sku: "GP-PLY-18"
+    hsn_code: "44121000"
+    gst_rate: 18
+    rate: 65.0
+    unit: "sqft"
+    vendor_id_ref: "GI001"
+    lead_time_days: 5
+    min_order_qty: 100
+    warranty: "5 years"
+    description: "IS 303 certified commercial plywood 18mm, 2440×1220mm"
+    tags: ["wood", "plywood"]
+
+  - name: "Century Teak Wood"
+    brand: "Century"
+    category: "wood"
+    subcategory: "timber"
+    sku: "CT-TEAK-1"
+    hsn_code: "44072900"
+    gst_rate: 18
+    rate: 120.0
+    unit: "sqft"
+    vendor_id_ref: "GI001"
+    lead_time_days: 10
+    min_order_qty: 50
+    description: "Burma teak wood, first quality, 25mm thickness, seasoned"
+    tags: ["wood", "teak"]
+
+  - name: "Action Tesa Pre-laminated Board 18mm"
+    brand: "Action Tesa"
+    category: "wood"
+    subcategory: "laminated_board"
+    sku: "AT-PLB-18"
+    hsn_code: "44111300"
+    gst_rate: 18
+    rate: 95.0
+    unit: "sqft"
+    vendor_id_ref: "GI001"
+    lead_time_days: 5
+    min_order_qty: 100
+    warranty: "5 years"
+    description: "Pre-laminated particle board 18mm, 2440×1830mm, various finishes"
+    tags: ["wood", "laminate"]
+
+  # ===== LAMINATE FLOORING =====
+  - name: "Greenlam Laminate Flooring 8mm"
+    brand: "Greenlam"
+    category: "flooring"
+    subcategory: "laminate"
+    sku: "GL-LM-8MM"
+    hsn_code: "44111400"
+    gst_rate: 18
+    rate: 75.0
+    unit: "sqft"
+    vendor_id_ref: "GL001"
+    lead_time_days: 10
+    min_order_qty: 300
+    warranty: "15 years"
+    description: "8mm AC4 laminate flooring with attached underlayment, click system"
+    tags: ["laminate", "flooring"]
+
+  - name: "Pergo Laminate Flooring 10mm"
+    brand: "Pergo"
+    category: "flooring"
+    subcategory: "laminate"
+    sku: "PG-LM-10MM"
+    hsn_code: "44111400"
+    gst_rate: 18
+    rate: 95.0
+    unit: "sqft"
+    vendor_id_ref: "GL001"
+    lead_time_days: 14
+    min_order_qty: 200
+    warranty: "20 years"
+    description: "10mm AC5 laminate flooring, water-resistant, click-lock system"
+    tags: ["laminate", "flooring"]
+
+  # ===== WATERPROOFING =====
+  - name: "Dr Fixit Waterproofing Compound"
+    brand: "Dr Fixit"
+    category: "waterproofing"
+    subcategory: "liquid_waterproofing"
+    sku: "DF-WP-5KG"
+    hsn_code: "38245090"
+    gst_rate: 18
+    rate: 18.0
+    unit: "sqft"
+    vendor_id_ref: "AP001"
+    lead_time_days: 3
+    min_order_qty: 20
+    description: "Ready-mix liquid waterproofing compound, coverage 5 sqft/kg/coat"
+    tags: ["waterproofing"]
+
+  - name: "Sika Top Seal 2K"
+    brand: "Sika"
+    category: "waterproofing"
+    subcategory: "liquid_waterproofing"
+    sku: "SK-TS-2K"
+    hsn_code: "32149090"
+    gst_rate: 18
+    rate: 22.0
+    unit: "sqft"
+    vendor_id_ref: "AP001"
+    lead_time_days: 5
+    min_order_qty: 15
+    warranty: "10 years"
+    description: "Two-component cementitious waterproofing coating for roofs and walls"
+    tags: ["waterproofing"]
+
+  # ===== NETWORKING =====
+  - name: "D-Link CAT6 UTP Cable 305m Box"
+    brand: "D-Link"
+    category: "data"
+    subcategory: "cable"
+    sku: "DL-CAT6-305"
+    hsn_code: "85444920"
+    gst_rate: 18
+    rate: 8500.0
+    unit: "box"
+    vendor_id_ref: "LG001"
+    lead_time_days: 5
+    min_order_qty: 5
+    warranty: "15 years"
+    description: "CAT6 UTP 4-pair cable, 305m box, 250MHz, compliant with TIA/EIA-568-B"
+    tags: ["networking", "cable"]
+
+  - name: "Cisco CBS250-8T Switch"
+    brand: "Cisco"
+    category: "data"
+    subcategory: "switches"
+    sku: "CS-CBS250-8T"
+    hsn_code: "85176290"
+    gst_rate: 18
+    rate: 15000.0
+    unit: "piece"
+    vendor_id_ref: "LG001"
+    lead_time_days: 7
+    min_order_qty: 2
+    warranty: "5 years"
+    description: "8-port gigabit managed switch, CBS250 series"
+    tags: ["networking", "switch"]

@@ -1,0 +1,256 @@
+# Auto Cost Engine — Wastage Rules Library
+# Standard material wastage percentages for interior fit-out
+# Simple format: object_type → wastage_pct
+
+rules:
+  - object_type: tile
+    wastage_pct: 8
+    description: "Ceramic/vitrified tiles — 8% for cutting and breakage"
+    applicable_to: material
+    is_mandatory: true
+
+  - object_type: carpet
+    wastage_pct: 5
+    description: "Carpet — 5% for trimming and pattern matching"
+    applicable_to: material
+    is_mandatory: true
+
+  - object_type: glass
+    wastage_pct: 2
+    description: "Toughened glass — 2% (pre-fabricated, minimal on-site cutting)"
+    applicable_to: material
+    is_mandatory: true
+
+  - object_type: paint
+    wastage_pct: 15
+    description: "Interior emulsion paint — 15% for overspray, touch-ups, and wastage"
+    applicable_to: material
+    is_mandatory: true
+
+  - object_type: gypsum_board
+    wastage_pct: 7
+    description: "Gypsum board — 7% for cutouts, offcuts, and openings"
+    applicable_to: material
+    is_mandatory: true
+
+  - object_type: laminate
+    wastage_pct: 5
+    description: "Laminate flooring — 5% for cutting and fitting"
+    applicable_to: material
+    is_mandatory: true
+
+  - object_type: waterproofing
+    wastage_pct: 10
+    description: "Waterproofing compound — 10% for uneven application and mixing residue"
+    applicable_to: material
+    is_mandatory: true
+
+  - object_type: electrical
+    wastage_pct: 3
+    description: "Electrical components — 3% for stripping and termination waste"
+    applicable_to: material
+    is_mandatory: true
+
+  - object_type: hvac
+    wastage_pct: 2
+    description: "HVAC equipment — 2% for installation losses"
+    applicable_to: material
+    is_mandatory: true
+
+  - object_type: plumbing
+    wastage_pct: 5
+    description: "Plumbing pipes and fittings — 5% for cutting and jointing waste"
+    applicable_to: material
+    is_mandatory: true
+
+# ---- Detailed breakdown by material_subcategory (retained for granular costing) ----
+
+detailed:
+  - material_category: tiling
+    material_subcategory: ceramic_tile
+    wastage_pct: 10
+    description: "Ceramic tiles — standard 10% for cutting and breakage"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: tiling
+    material_subcategory: vitrified_tile
+    wastage_pct: 8
+    description: "Vitrified tiles — 8% for cutting and breakage"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: flooring
+    material_subcategory: carpet
+    wastage_pct: 5
+    description: "Carpet (broadloom) — 5% for pattern matching"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: flooring
+    material_subcategory: carpet_tile
+    wastage_pct: 3
+    description: "Carpet tiles — 3% for modular fitting"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: flooring
+    material_subcategory: vinyl_sheet
+    wastage_pct: 8
+    description: "Vinyl sheet flooring — 8% for seam matching"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: flooring
+    material_subcategory: wooden_flooring
+    wastage_pct: 7
+    description: "Engineered wood flooring — 7% for tongue-groove fitting"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: flooring
+    material_subcategory: laminate
+    wastage_pct: 5
+    description: "Laminate flooring — 5% for click-lock fitting"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: glass
+    material_subcategory: toughened_glass
+    wastage_pct: 2
+    description: "Toughened glass — 2% (pre-fabricated, minimal on-site cutting)"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: glass
+    material_subcategory: laminated_glass
+    wastage_pct: 3
+    description: "Laminated glass — 3%"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: glass
+    material_subcategory: mirror_glass
+    wastage_pct: 5
+    description: "Mirror glass — 5% for edge chipping"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: paint
+    material_subcategory: interior_emulsion
+    wastage_pct: 15
+    description: "Interior emulsion paint — 15% for overspray and touch-ups"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: paint
+    material_subcategory: enamel_paint
+    wastage_pct: 10
+    description: "Enamel paint — 10%"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: paint
+    material_subcategory: primer
+    wastage_pct: 10
+    description: "Primer — 10%"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: paint
+    material_subcategory: putty
+    wastage_pct: 10
+    description: "Wall putty / skim coat — 10%"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: gypsum
+    material_subcategory: gypsum_board
+    wastage_pct: 7
+    description: "Gypsum board — 7% for cutouts and offcuts"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: gypsum
+    material_subcategory: joint_compound
+    wastage_pct: 10
+    description: "Joint compound — 10%"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: gypsum
+    material_subcategory: pop_finish
+    wastage_pct: 10
+    description: "POP finish — 10% for mixing and application"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: metal
+    material_subcategory: ms_steel
+    wastage_pct: 5
+    description: "Mild steel — 5% for cutting and welding"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: wood
+    material_subcategory: plywood
+    wastage_pct: 8
+    description: "Plywood — 8% for cutting waste"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: wood
+    material_subcategory: timber
+    wastage_pct: 10
+    description: "Timber — 10% for sawing and planing"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: concrete
+    material_subcategory: cement_mortar
+    wastage_pct: 5
+    description: "Cement mortar — 5% for mixing and application"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: electrical
+    material_subcategory: pvc_conduit
+    wastage_pct: 5
+    description: "PVC conduit — 5% for bends and offcuts"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: electrical
+    material_subcategory: copper_wire
+    wastage_pct: 5
+    description: "Copper wire — 5% for stripping and termination"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: plumbing
+    material_subcategory: pvc_pipe
+    wastage_pct: 5
+    description: "PVC pipe — 5% for joining and cutting"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: adhesive
+    material_subcategory: tile_adhesive
+    wastage_pct: 5
+    description: "Tile adhesive — 5% for mixing residue"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: waterproofing
+    material_subcategory: liquid_waterproofing
+    wastage_pct: 10
+    description: "Liquid waterproofing — 10% for uneven application"
+    applicable_to: material
+    is_mandatory: true
+
+  - material_category: waterproofing
+    material_subcategory: membrane
+    wastage_pct: 8
+    description: "Waterproofing membrane — 8% for overlap and seams"
+    applicable_to: material
+    is_mandatory: true

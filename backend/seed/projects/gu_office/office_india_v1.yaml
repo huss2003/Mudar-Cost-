@@ -1,0 +1,750 @@
+version: 1
+building_type: office_fitout
+reference: "G.U. Office Interior Layout"
+grand_total: 6251940
+
+trades:
+  - name: "Civil Work & Plumbing  Work."
+    expected_total: 1061700
+    items:
+      - description: "Demolition of area wall as per sie condition and catering away the debris."
+        unit: LS
+        qty: 0.0
+        rate: 25000.0
+        amount: 25000.0
+        object_type: demolition
+      - description: "Truck charges for removing the debris from site till dumbing ground."
+        unit: nos
+        qty: 9.0
+        rate: 8500.0
+        amount: 76500.0
+        object_type: debris_removal
+      - description: "Providing and erecting 6" thk Siporex block wall in cement and sand mortar complete with material, l"
+        location: "washroom & pantry"
+        unit: sft.
+        qty: 230.0
+        rate: 450.0
+        amount: 103500.0
+        object_type: blockwork
+        make: "Aircon/ Ascolite/ Biltech"
+      - description: "Providing internal cement plaster in a single coat of cement sand to concrete and masonry surfaces i"
+        location: "Washroom's out side olny"
+        unit: sft.
+        qty: 650.0
+        rate: 75.0
+        amount: 48750.0
+        object_type: cement_plaster
+        make: "Ultratech / Ambuja/Acc"
+      - description: "Providing and laying up to 150-200mm thick cement concrete flooring with cement, sand and aggregate "
+        location: "Display area"
+        unit: sft.
+        qty: 520.0
+        rate: 150.0
+        amount: 78000.0
+        object_type: pcc_flooring
+        make: "Ultratech / Ambuja - 43 grade /  Equi"
+      - description: "Providing and laying up to 150-200mm thick cement concrete flooring with cement, sand and aggregate "
+        location: "Remaining office area"
+        unit: sft.
+        qty: 1330.0
+        rate: 120.0
+        amount: 159600.0
+        object_type: pcc_flooring
+        make: "Ultratech / Ambuja - 43 grade /  Equi"
+      - description: "Providing and laying flooring with1200 mm x 600 mm Vitrified Tiles approved make and sample in patte"
+        location: "Entire Office"
+        unit: sft.
+        qty: 1900.0
+        rate: 250.0
+        amount: 475000.0
+        object_type: vitrified_flooring
+        make: "Nitco/ Nelson/ Solostone/ Oasis"
+      - description: "Providing and laying vitrified tiles skirting of approved shade and make in cement paste complete wi"
+        location: "Entire office"
+        unit: rft.
+        qty: 270.0
+        rate: 110.0
+        amount: 29700.0
+        object_type: vitrified_skirting
+        make: "Nitco/ Nelson/ Solostone/ Oasis"
+      - description: "Providing & laying Vitrified tile Flooring of approved make, of size 600mm x 600mm , cement & Sand b"
+        location: "Pantry"
+        unit: sft.
+        qty: 190.0
+        rate: 150.0
+        amount: 28500.0
+        object_type: vitrified_flooring
+        make: "Nitco/ Nelson/ Solostone/ Oasis"
+      - description: "Providing & fabricating wash basin counter top, 600 mm deep / 750 mm high from 19 mm thk Machine cut"
+        location: "Pantry"
+        unit: rft.
+        qty: 18.0
+        rate: 1300.0
+        amount: 23400.0
+        object_type: granite_counter
+        make: "Telephone black / lakha red as per req. /  Equi"
+      - description: "Providing and fixing sandwich type  door jambs as per the detail given of granite  with champhered a"
+        location: "Pantry"
+        unit: rft.
+        qty: 25.0
+        rate: 550.0
+        amount: 13750.0
+        object_type: granite_jamb
+        make: "Telephone black / lakha red as per req. /  Equi"
+  - name: "Plumbing  Work."
+    expected_total: 39100
+    items:
+      - description: "Supplying & fixing CPVC pipe , cpvc pipe specials such as elbows, tees, bends, unions, flanges, flan"
+        location: "Pantry"
+        unit: L.S
+        qty: 0.0
+        rate: 18000.0
+        amount: 18000.0
+        object_type: cpvc_piping
+        make: "Prince/Astral/ Supreme"
+      - description: "Providing & fixing S.S. Sink of specified size with Floor mounted pillar cock, bottle trap, angle co"
+        location: "cafeteria"
+        unit: nos.
+        qty: 1.0
+        rate: 12000.0
+        amount: 12000.0
+        object_type: ss_sink
+        make: "Nirali/ Daimond/ Franki"
+      - description: "Providing and fixing approved make CP twin robe hook with CP screws etc., complete."
+        location: "Gents/ Ladies washroom"
+        unit: nos.
+        qty: 1.0
+        rate: 1300.0
+        amount: 1300.0
+        object_type: robe_hook
+        make: "Jaquar"
+      - description: "Providing and fixing Liquid soap dispenser of approved make at required heights as per instructions."
+        location: "Gents/ Ladies washroom"
+        unit: nos.
+        qty: 1.0
+        rate: 6500.0
+        amount: 6500.0
+        object_type: soap_dispenser
+        make: "Askon"
+      - description: "Providing and fixing Toilet roll holder  at indicated height as per drawings Local make."
+        location: "Gents/ Ladies washroom"
+        unit: nos.
+        qty: 1.0
+        rate: 1300.0
+        amount: 1300.0
+        object_type: toilet_roll_holder
+        make: "Jaquar"
+  - name: "POP/ Gypsum work."
+    expected_total: 807910
+    items:
+      - description: "Providing & fixing facia of the following sizes in extruded aluminium section,  finished powder coat"
+        location: "Only for enclosed cabins"
+        unit: sft.
+        qty: 100.0
+        rate: 105.0
+        amount: 10500.0
+        object_type: aluminium_facia
+        make: "Saint Gobain (Gyproc), Oman Gypsum"
+      - description: "Providing and applying punning  up to 8 to10mm thick layer of Plaster of Paris applied over selected"
+        location: "wall, columns"
+        unit: sft.
+        qty: 650.0
+        rate: 50.0
+        amount: 32500.0
+        object_type: pop_punning
+        make: "Gyproc, Stuco, Natural Gypsum"
+      - description: "Providing and applying of gyproc bond on all coumns to take POP."
+        location: "Columns"
+        unit: sft.
+        qty: 200.0
+        rate: 30.0
+        amount: 6000.0
+        object_type: gyproc_bond
+        make: "Gyroc"
+      - description: "Providing & fixing 75 mm thk partition to take gypboard finish on both sides on GI frame work,  usin"
+        location: "As per Layout"
+        unit: sft.
+        qty: 652.0
+        rate: 200.0
+        amount: 130400.0
+        object_type: gypsum_partition_full
+        make: "Saint Gobain (Gyproc), Oman Gypsum"
+      - description: "Providing & fixing of 50mm thick Rock wool of density 48kg/m3 suitably affixed to partition framewor"
+        location: "As per Layout"
+        unit: sft
+        qty: 652.0
+        rate: 80.0
+        amount: 52160.0
+        object_type: rockwool_insulation
+        make: "Rockwool India/ Polybond/ Equi"
+      - description: "Providing and fixing suspended false ceiling consisting of 12.5mm thick Gypsum plaster board suspend"
+        location: "Only Recepation area"
+        unit: sft.
+        qty: 395.0
+        rate: 160.0
+        amount: 63200.0
+        object_type: gypsum_false_ceiling
+        make: "USG / Saint Gobain (Gyproc)"
+      - description: "Providing and fixing suspended METALWORKS Open Cell False ceiling, finished with powder coateded, Th"
+        location: "Display area"
+        unit: sft.
+        qty: 585.0
+        rate: 390.0
+        amount: 228150.0
+        object_type: metalworks_open_cell
+      - description: "Providing & fixing of Floor Protection PP sheet to protect the tiles for getting damage."
+        location: "wherever we are installing tile"
+        unit: L/S
+        qty: 1900.0
+        rate: 20000.0
+        amount: 20000.0
+        object_type: floor_protection
+      - description: "Providing and fixing M S Frame 4"x4"Thick squre pipe Supply & Installation as per design."
+        location: "Display area"
+        unit: L/S
+        qty: 0.0
+        rate: 265000.0
+        amount: 265000.0
+        object_type: providing_and_fixing_m_s_frame_4"x4"thic
+  - name: "Carpentary Work."
+    expected_total: 683000
+    items:
+      - description: "Providing and fixing 18mm. Thk. Commercial plywood Pelmet for Blinds near external Glass cladding at"
+        unit: rft.
+        qty: 97.0
+        rate: 750.0
+        amount: 72750.0
+        object_type: pelmet
+        make: "Gold Dust/samrat/ Archid"
+      - description: "Single Glazed Glass Partition with Aluminium Frame  Black Anodised Matt finish alongwith 10mm toughn"
+        location: "As per Layout"
+        unit: sft
+        qty: 40.0
+        rate: 650.0
+        amount: 26000.0
+        object_type: glass_partition_aluminium
+        make: "Windor/ Orno"
+      - description: "PROVIDE & FIXING SINGLE LEAF GLASS DOOR  WITH ORNO HARDWARE TOP BOTTAM PIVOT OR SIDE HINGES 4 NOS SA"
+        location: "Reception Entrance, cabins, meeting room, Board room"
+        unit: Nos.
+        qty: 4.0
+        rate: 42000.0
+        amount: 168000.0
+        object_type: glass_door_toughened
+        make: "Windor/ Orno"
+      - description: "Number of Leaves :1"
+        location: "Washroom"
+        unit: Nos.
+        qty: 1.0
+        rate: 27000.0
+        amount: 27000.0
+        object_type: number_of_leaves_:1
+        make: "R swastik/ Arjun pine"
+      - description: "Providing and fixing full height table in ply with 18mm thick ply, approved shade laminate on all ex"
+        location: "Cafeteria full height table"
+        unit: sft.
+        qty: 20.0
+        rate: 1500.0
+        amount: 30000.0
+        object_type: ply_table_full_height
+        make: "Avislam, Uropa"
+      - description: "Full ht. storage with openable shutters not more than 16' wide per shutter, in laminate top, adjusta"
+        location: "beisde Café table"
+        unit: sft
+        qty: 25.0
+        rate: 1400.0
+        amount: 35000.0
+        object_type: full_height_storage
+        make: "Spaces/ Versatile/ AOS"
+      - description: "Providing and fixing 750mm high over head storages of  450mm deep in 18mm thick  ply with 18mm thick"
+        location: "cafeteria"
+        unit: sft.
+        qty: 15.0
+        rate: 1400.0
+        amount: 21000.0
+        object_type: overhead_storage
+        make: "Avislam, Uropa"
+      - description: "Providing and fixing a desk of over all size of                                         6'-0" X 2'-6"
+        location: "Reception Table"
+        unit: nos.
+        qty: 1.0
+        rate: 115000.0
+        amount: 115000.0
+        object_type: providing_and_fixing_a_desk_of_over_all
+        make: "Corain/ Durain veneer"
+      - description: "Providing & fixing  ply partition on both sides using 12mm thk standard commercial ply.finished with"
+        location: "Reception Area"
+        unit: sft.
+        qty: 150.0
+        rate: 950.0
+        amount: 142500.0
+        object_type: ply_partition
+        make: "Gold Dust/samrat/ Archid"
+      - description: "Providing and fixing 2100mm high storages of  600 mm deep in 18mm thick  ply with 12mm thick commerc"
+        location: "Electrical DB"
+        unit: sft.
+        qty: 20.0
+        rate: 1100.0
+        amount: 22000.0
+        object_type: high_storage
+        make: "Avislam, Stylam, Uropa"
+      - description: "Providing & fixing  ply Panelling on door using 12mm thk standard commercial ply.finished with lamin"
+        location: "Eantrance"
+        unit: rft
+        qty: 25.0
+        rate: 950.0
+        amount: 23750.0
+        object_type: ply_panelling
+  - name: "Trade 5"
+    expected_total: 0
+    items:
+      - description: "Plastic Emulsion Paint (for ceilings):  Providing and applying of Plastic emulsion paint of approved"
+        location: "Complete office ceiling."
+        unit: sft.
+        qty: 1900.0
+        rate: 31.0
+        amount: 58900.0
+        object_type: plastic_emulsion_paint
+        make: "Asian / Berger"
+      - description: "Lustre Paint (for partition & walls):  Providing and applying of Lustre paint of approved make to al"
+        location: "Complete office wall"
+        unit: sft.
+        qty: 3600.0
+        rate: 35.0
+        amount: 126000.0
+        object_type: lustre_paint
+        make: "Asian / Berger"
+      - description: "Site cleaning of site before handover of site with chemical cleaning of glasses, flooring, washroom "
+        unit: LS
+        qty: 0.0
+        rate: 20000.0
+        amount: 20000.0
+        object_type: site_cleaning
+  - name: "Trade 6"
+    expected_total: 0
+    items:
+      - description: "Work top of size 1200 x 600 x 1200  mm made of 25mm thick prelaminated particleboard with pvc edgebi"
+        location: "Workstation area"
+        unit: Nos.
+        qty: 6.0
+        rate: 23000.0
+        amount: 138000.0
+        object_type: top_of_size_1200_x_600_x_1200_mm_m
+        make: "Spaces/ Versatile/ AOS"
+      - description: "Freestanding Table of size 3000 x 1200 made of 25mm thick prelaminated particleboard with covered wi"
+        location: "10 seater Meeting Room"
+        unit: Nos.
+        qty: 1.0
+        rate: 42000.0
+        amount: 42000.0
+        object_type: freestanding_table_of_size_3000_x_1200_m
+        make: "Spaces/ Versatile/ AOS"
+      - description: "Freestanding Table of size 1500 x 600 made of 25mm thick prelaminated particleboard with covered wit"
+        location: "Cabin Table"
+        unit: Nos.
+        qty: 1.0
+        rate: 35000.0
+        amount: 35000.0
+        object_type: freestanding_table_of_size_1500_x_600_ma
+        make: "Spaces/ Versatile/ AOS"
+      - description: "Low ht. storage with openable shutters not more than 16' wide per shutter, in laminate top, adjustab"
+        location: "Meeting room & cabin"
+        unit: sft
+        qty: 55.0
+        rate: 1200.0
+        amount: 66000.0
+        object_type: low_height_storage
+        make: "Spaces/ Versatile/ AOS"
+  - name: "Trade 7"
+    expected_total: 0
+    items:
+      - description: "Supply of Medium back chairs for complete office."
+        location: "Workstation, Meeting room,  cabin."
+        unit: Nos
+        qty: 17.0
+        rate: 6000.0
+        amount: 102000.0
+        object_type: medium_back_chair
+        make: "Divine/ chairy farie"
+      - description: "Supply of High back chair"
+        location: "Cabin & Recepation"
+        unit: Nos
+        qty: 2.0
+        rate: 8000.0
+        amount: 16000.0
+        object_type: high_back_chair
+        make: "Divine/ chairy farie"
+      - description: "Supply of Bar Stools."
+        location: "High standing table"
+        unit: Nos
+        qty: 4.0
+        rate: 4000.0
+        amount: 16000.0
+        object_type: bar_stool
+        make: "Imported"
+  - name: "Trade 8"
+    expected_total: 0
+    items:
+      - description: "Supplying and Fixing of Rollerblinds for entire glass façade area as approved by Architect for exter"
+        location: "Complete glass façade"
+        unit: sft.
+        qty: 1150.0
+        rate: 160.0
+        amount: 184000.0
+        object_type: supplying_and_fixing_of_rollerblinds_for
+        make: "Rbm/Platinum Equi"
+      - description: "Supplying and Applying wallpaper on wall as per architects design."
+        location: "Recepation. Worksation seating, Open area"
+        unit: Roll
+        qty: 5.0
+        rate: 7000.0
+        amount: 35000.0
+        object_type: wallpaper
+        make: "Hego / Ecosoft"
+      - description: "Supplying and Applying frosted film on glass partitions and doors as per architects design."
+        location: "For all Glass partition"
+        unit: sft.
+        qty: 50.0
+        rate: 110.0
+        amount: 5500.0
+        object_type: frosted_film
+        make: "Garware / Equi"
+      - description: "Providing and fixing of 8 to 10mm Acoustic panelling on all meeting room & cabin ( single wall) fixe"
+        location: "Cabins, meeting room, Board Room"
+        unit: sft
+        qty: 300.0
+        rate: 700.0
+        amount: 210000.0
+        object_type: acoustic_panelling
+        make: "Continuum/ Equi"
+      - description: "Loading/ Unloading of all the materials."
+        unit: LS
+        qty: 0.0
+        rate: 50000.0
+        amount: 50000.0
+        object_type: loading_unloading
+      - description: "AluminiumSkirting : Providing and Fixing aluminium skirting  to be  integrated with wall partition o"
+        location: "As per Layout"
+        unit: Rft
+        qty: 150.0
+        rate: 100.0
+        amount: 15000.0
+        object_type: aluminium_skirting
+        make: "CNR"
+      - description: "Supply & Installation of GI rafters as per design."
+        location: "executive waiting area."
+        unit: sft
+        qty: 100.0
+        rate: 985.0
+        amount: 98500.0
+        object_type: gi_rafter
+      - description: "Room Signage as per design."
+        location: "Cabins / Meeting"
+        unit: Nos
+        qty: 1.0
+        rate: 1250.0
+        amount: 1250.0
+        object_type: room_signage
+      - description: "Push & Pull Set in SS plate."
+        location: "All Doors"
+        unit: Nos
+        qty: 2.0
+        rate: 550.0
+        amount: 1100.0
+        object_type: push_pull_set
+      - description: "Mathadi cost."
+        unit: LS
+        qty: 0.0
+        rate: 40000.0
+        amount: 40000.0
+        object_type: mathadi_cost
+      - description: "Supply of vertical planters, including pebbles  nearby executive waiting area."
+        unit: LS
+        qty: 0.0
+        rate: 20000.0
+        amount: 20000.0
+        object_type: vertical_planter
+      - description: "Supply of small 6" pots with plants above storage & 6 nos. 4' ht planters."
+        unit: LS
+        qty: 0.0
+        rate: 15000.0
+        amount: 15000.0
+        object_type: small_pots_plants
+      - description: "Supply & installation of Company logo of Acrylic solid color as per company guidelines till 300mm ht"
+        unit: Nos
+        qty: 1.0
+        rate: 18000.0
+        amount: 18000.0
+        object_type: company_logo
+  - name: "Trade 9"
+    expected_total: 0
+    items:
+      - description: "2 UPS & 1 Raw Points for each Workstation."
+        unit: Points
+        qty: 6.0
+        rate: 2250.0
+        amount: 13500.0
+        object_type: linear_workstation
+        make: "Polycab"
+      - description: "2 UPS & 2 Raw Points for Reception."
+        unit: Points
+        qty: 6.0
+        rate: 2250.0
+        amount: 13500.0
+        object_type: electrical_point
+        make: "Polycab"
+      - description: "1 UPS & 1 Raw Points for TV."
+        unit: Points
+        qty: 2.0
+        rate: 2250.0
+        amount: 4500.0
+        object_type: electrical_point
+        make: "Polycab"
+      - description: "2 UPS & 1 Raw Points for Manager cabin"
+        unit: Points
+        qty: 1.0
+        rate: 2250.0
+        amount: 2250.0
+        object_type: electrical_point
+        make: "Polycab"
+      - description: "6 Raw points for open area at Skirting Level."
+        unit: Points
+        qty: 4.0
+        rate: 2250.0
+        amount: 9000.0
+        object_type: electrical_point
+        make: "Polycab"
+      - description: "5 Raw & 5 UPS points for confarnce room"
+        unit: Points
+        qty: 3.0
+        rate: 2250.0
+        amount: 6750.0
+        object_type: electrical_point
+        make: "Polycab"
+      - description: "2 UPS & 1 Raw Points for  TV."
+        unit: Points
+        qty: 1.0
+        rate: 2250.0
+        amount: 2250.0
+        object_type: electrical_point
+        make: "Polycab"
+      - description: "15 amp 4 Raw point for Printers."
+        unit: Points
+        qty: 1.0
+        rate: 2250.0
+        amount: 2250.0
+        object_type: electrical_point
+        make: "Polycab (15A)"
+      - description: "15 amp 8 Raw point for cafeteria."
+        unit: Points
+        qty: 2.0
+        rate: 2250.0
+        amount: 4500.0
+        object_type: electrical_point
+        make: "Polycab (15A)"
+      - description: "15 amp Sockets for washroom"
+        unit: Points
+        qty: 1.0
+        rate: 2250.0
+        amount: 2250.0
+        object_type: 15_amp_sockets_for_washroom
+        make: "Polycab"
+      - description: "Providing & fixing of new Electrical Panel. Supply, installation, testing and commissioning of follo"
+        unit: nos.
+        qty: 1.0
+        rate: 100000.0
+        amount: 100000.0
+        object_type: electrical_panel
+        make: "Legrand/ Schnieder"
+      - description: "Supply, Receiving, storing, handling, installation & commissioning of LED spot light lighting fixtur"
+        location: "As per layout"
+        unit: Nos.
+        qty: 10.0
+        rate: 2950.0
+        amount: 29500.0
+        object_type: led_spot_light
+      - description: "Supply, Receiving, storing, handling, installation & commissioning of Designer Hanging Light fixture"
+        location: "As per layout"
+        unit: Nos.
+        qty: 5.0
+        rate: 15000.0
+        amount: 75000.0
+        object_type: designer_hanging_light
+        make: "Imported/ Tisva"
+      - description: "Supply, Receiving, storing, handling, installation & commissioning of 1200 mm length LED Linear ligh"
+        location: "As per layout"
+        unit: Nos.
+        qty: 2.0
+        rate: 8500.0
+        amount: 17000.0
+        object_type: led_linear_light_1200
+      - description: "Supply, Receiving, storing, handling, installation & commissioning of LED Linear Profile light with "
+        location: "Board room, Workstaion area"
+        unit: Rft
+        qty: 32.0
+        rate: 1250.0
+        amount: 40000.0
+        object_type: led_linear_profile
+      - description: "Supply, Receiving, storing upto to 30 mm profile light installation on ceiling & commissioning of pr"
+        location: "Recepation area"
+        unit: Rft
+        qty: 46.0
+        rate: 180.0
+        amount: 8280.0
+        object_type: profile_light_installation
+      - description: "Supply, Receiving, storing, handling, installation & commissioning of LED spot light lighting fixtur"
+        location: "As per layout"
+        unit: Nos.
+        qty: 27.0
+        rate: 2950.0
+        amount: 79650.0
+        object_type: led_spot_light
+      - description: "Raceway Work ( combination of PVC & Aluminium )for complete office as per the Location of Cabins & W"
+        unit: LS
+        qty: 0.0
+        rate: 50000.0
+        amount: 50000.0
+        object_type: linear_workstation
+      - description: "1 Data & 1 voice for each workstations."
+        unit: Points
+        qty: 6.0
+        rate: 2850.0
+        amount: 17100.0
+        object_type: linear_workstation
+        make: "D link"
+      - description: "1 Data & 2 Voice for Reception Table."
+        unit: Points
+        qty: 2.0
+        rate: 2850.0
+        amount: 5700.0
+        object_type: data_voice_point
+        make: "D link"
+      - description: "1 Data & 1 Voice for each Manager cabin."
+        unit: Points
+        qty: 1.0
+        rate: 2850.0
+        amount: 2850.0
+        object_type: data_voice_point
+        make: "D link"
+      - description: "2 Data & 1 Voice for all meeting rooms. (10 seater)"
+        unit: Points
+        qty: 1.0
+        rate: 2850.0
+        amount: 2850.0
+        object_type: data_voice_point
+        make: "D link"
+      - description: "4 Data for Printer. ( Including all materials )"
+        unit: Points
+        qty: 1.0
+        rate: 2850.0
+        amount: 2850.0
+        object_type: data_voice_point
+        make: "D link"
+      - description: "2 Data for TV."
+        location: "Cabin, board room, meeting room & recepation"
+        unit: Points
+        qty: 3.0
+        rate: 2850.0
+        amount: 8550.0
+        object_type: data_voice_point
+        make: "D link"
+      - description: "HDMI cable for in Meeting Room & Board room."
+        location: "Cabin,meeting room, & recepation"
+        unit: nos.
+        qty: 3.0
+        rate: 9500.0
+        amount: 28500.0
+        object_type: hdmi_cable
+      - description: "Providing and installing 24 port Patch panel."
+        unit: No.
+        qty: 4.0
+        rate: 7500.0
+        amount: 30000.0
+        object_type: patch_panel
+        make: "D link"
+      - description: "Providing and installing 7' patch cord."
+        unit: No.
+        qty: 180.0
+        rate: 950.0
+        amount: 171000.0
+        object_type: patch_cord
+        make: "D link"
+      - description: "Punching & crimping of data & voice points at rack end & user end complete with numbering, ferulling"
+        unit: LS
+        qty: 0.0
+        rate: 105000.0
+        amount: 105000.0
+        object_type: data_voice_point
+      - description: "Supply, installation of cable manager."
+        unit: No.
+        qty: 8.0
+        rate: 1300.0
+        amount: 10400.0
+        object_type: cable_manager
+  - name: "Trade 10"
+    expected_total: 0
+    items:
+      - description: "Providing, fixing, testing & commissioning of 6W Ceiling SPEAKER"
+        unit: Nos.
+        qty: 2.0
+        rate: 3000.0
+        amount: 6000.0
+        object_type: ceiling_speaker
+        make: "BOSCH"
+      - description: "Providing & fixing 120 watts amplifier."
+        unit: Nos.
+        qty: 2.0
+        rate: 55000.0
+        amount: 110000.0
+        object_type: amplifier
+      - description: "Providing, fixing, testing & commissioning of Back Box"
+        unit: Nos.
+        qty: 2.0
+        rate: 1550.0
+        amount: 3100.0
+        object_type: back_box
+      - description: "Providing, fixing, testing & commissioning of  Volume Controller"
+        unit: Nos.
+        qty: 2.0
+        rate: 1950.0
+        amount: 3900.0
+        object_type: volume_controller
+      - description: "Providing & fixing of speaker wiring in PVC conduit."
+        unit: Rmtrs
+        qty: 100.0
+        rate: 110.0
+        amount: 11000.0
+        object_type: speaker_wiring
+  - name: "Trade 11"
+    expected_total: 0
+    items:
+      - description: "Supply, Installation & Testing of Smoke detector."
+        location: "Complete office"
+        unit: Sq.ft
+        qty: 1800.0
+        rate: 140.0
+        amount: 252000.0
+        object_type: smoke_detector
+        make: "Agni/ Raval/ Fireclass"
+  - name: "Trade 12"
+    expected_total: 0
+    items:
+      - description: "Supply, installation & Testing of Sprinkler Point Complete with required Flexible Drop & Surface Typ"
+        location: "Complete office"
+        unit: Sq.ft
+        qty: 1800.0
+        rate: 110.0
+        amount: 198000.0
+        object_type: sprinkler_point
+        make: "Newage/ Flexdrop"
+  - name: "Trade 13"
+    expected_total: 0
+    items:
+      - description: "Supply and installation of copper refrigerant piping, drain piping, and electrical cabling with all "
+        location: "Complete office"
+        unit: Sqft
+        qty: 1800.0
+        rate: 510.0
+        amount: 918000.0
+        object_type: vrv_system
+        make: "LG/ Daikin/ Mitsibushi"

@@ -1,0 +1,197 @@
+{
+  "meta": {
+    "description": "Hand-annotated ground truth for sample_floor_plan.dxf and sample_floor_plan.pdf",
+    "created": "2026-07-21",
+    "object_types": ["wall", "partition", "door", "window", "furniture", "other"],
+    "unit": "mm"
+  },
+  "fixtures": {
+    "sample_floor_plan.dxf": {
+      "description": "10m x 8m rectangular floor plan with internal partition, 1 door, 1 window, 2 desks, 2 room labels",
+      "objects": [
+        {
+          "id": "gt-dxf-wall-1",
+          "object_type": "wall",
+          "label": null,
+          "length": 10000.0,
+          "width": 200.0,
+          "area": null,
+          "thickness": 200.0,
+          "location_x": 5000.0,
+          "location_y": 0.0,
+          "bbox_coords": [0.0, -100.0, 10000.0, 100.0],
+          "layer": "A-WALL",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-wall-2",
+          "object_type": "wall",
+          "label": null,
+          "length": 10000.0,
+          "width": 200.0,
+          "location_x": 5000.0,
+          "location_y": 8000.0,
+          "bbox_coords": [0.0, 7900.0, 10000.0, 8100.0],
+          "layer": "A-WALL",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-wall-3",
+          "object_type": "wall",
+          "label": null,
+          "length": 8000.0,
+          "width": 200.0,
+          "location_x": 0.0,
+          "location_y": 4000.0,
+          "bbox_coords": [-100.0, 0.0, 100.0, 8000.0],
+          "layer": "A-WALL",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-wall-4",
+          "object_type": "wall",
+          "label": null,
+          "length": 8000.0,
+          "width": 200.0,
+          "location_x": 10000.0,
+          "location_y": 4000.0,
+          "bbox_coords": [9900.0, 0.0, 10100.0, 8000.0],
+          "layer": "A-WALL",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-partition-1",
+          "object_type": "partition",
+          "label": null,
+          "length": 8000.0,
+          "width": 100.0,
+          "location_x": 5000.0,
+          "location_y": 4000.0,
+          "bbox_coords": [4950.0, 0.0, 5050.0, 8000.0],
+          "layer": "A-PART",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-door-1",
+          "object_type": "door",
+          "label": null,
+          "width": 900.0,
+          "location_x": 3000.0,
+          "location_y": 0.0,
+          "bbox_coords": [3000.0, -500.0, 3900.0, 500.0],
+          "layer": "A-DOOR",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-window-1",
+          "object_type": "window",
+          "label": null,
+          "width": 2000.0,
+          "location_x": 10000.0,
+          "location_y": 3000.0,
+          "bbox_coords": [9500.0, 2000.0, 10500.0, 4000.0],
+          "layer": "A-WINDOW",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-furniture-1",
+          "object_type": "furniture",
+          "label": "Desk",
+          "width": 750.0,
+          "length": 1500.0,
+          "location_x": 2250.0,
+          "location_y": 1375.0,
+          "bbox_coords": [1500.0, 1000.0, 3000.0, 1750.0],
+          "layer": "A-FURN",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-furniture-2",
+          "object_type": "furniture",
+          "label": "Desk",
+          "width": 750.0,
+          "length": 1500.0,
+          "location_x": 7250.0,
+          "location_y": 4875.0,
+          "bbox_coords": [6500.0, 4500.0, 8000.0, 5250.0],
+          "layer": "A-FURN",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-label-1",
+          "object_type": "other",
+          "label": "Office Area",
+          "location_x": 2500.0,
+          "location_y": 5000.0,
+          "bbox_coords": [1000.0, 4500.0, 4000.0, 5500.0],
+          "layer": "A-TEXT",
+          "count_as": 1
+        },
+        {
+          "id": "gt-dxf-label-2",
+          "object_type": "other",
+          "label": "Conference Room",
+          "location_x": 7500.0,
+          "location_y": 2000.0,
+          "bbox_coords": [6000.0, 1500.0, 9000.0, 2500.0],
+          "layer": "A-TEXT",
+          "count_as": 1
+        }
+      ]
+    },
+    "sample_floor_plan.pdf": {
+      "description": "PDF version of the same floor plan: outer walls rect, internal partition line, door rect, window rect, room labels",
+      "objects": [
+        {
+          "id": "gt-pdf-wall-1",
+          "object_type": "wall",
+          "label": null,
+          "length": 200.0,
+          "width": 1.5,
+          "area": null,
+          "bbox_coords": [48.0, 25.0, 248.0, 185.0],
+          "count_as": 4
+        },
+        {
+          "id": "gt-pdf-partition-1",
+          "object_type": "partition",
+          "label": null,
+          "length": 160.0,
+          "bbox_coords": [148.0, 25.0, 148.0, 185.0],
+          "count_as": 1
+        },
+        {
+          "id": "gt-pdf-door-1",
+          "object_type": "door",
+          "label": null,
+          "width": 30.0,
+          "bbox_coords": [100.0, 25.0, 130.0, 35.0],
+          "count_as": 1
+        },
+        {
+          "id": "gt-pdf-window-1",
+          "object_type": "window",
+          "label": null,
+          "width": 10.0,
+          "height": 40.0,
+          "bbox_coords": [248.0, 60.0, 258.0, 100.0],
+          "count_as": 1
+        },
+        {
+          "id": "gt-pdf-label-1",
+          "object_type": "other",
+          "label": "Office Area",
+          "bbox_coords": [70.0, 120.0, 160.0, 140.0],
+          "count_as": 1
+        },
+        {
+          "id": "gt-pdf-label-2",
+          "object_type": "other",
+          "label": "Conference",
+          "bbox_coords": [170.0, 80.0, 240.0, 100.0],
+          "count_as": 1
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,321 @@
+version: 1
+project: "G.U. Office"
+reference_totals:
+  grand_total: 6251940
+rates:
+  15_amp_sockets_for_washroom:
+    rate: 2250.0
+    unit: "Points"
+    description: "15 amp Sockets for washroom"
+  acoustic_panelling:
+    rate: 700.0
+    unit: "sft"
+    description: "Providing and fixing of 8 to 10mm Acoustic panelling on all meeting room & cabin"
+  aluminium_facia:
+    rate: 105.0
+    unit: "sft."
+    description: "Providing & fixing facia of the following sizes in extruded aluminium section,  "
+  aluminium_skirting:
+    rate: 100.0
+    unit: "Rft"
+    description: "AluminiumSkirting : Providing and Fixing aluminium skirting  to be  integrated w"
+  amplifier:
+    rate: 55000.0
+    unit: "Nos."
+    description: "Providing & fixing 120 watts amplifier."
+  back_box:
+    rate: 1550.0
+    unit: "Nos."
+    description: "Providing, fixing, testing & commissioning of Back Box"
+  bar_stool:
+    rate: 4000.0
+    unit: "Nos"
+    description: "Supply of Bar Stools."
+  blockwork:
+    rate: 450.0
+    unit: "sft."
+    description: "Providing and erecting 6" thk Siporex block wall in cement and sand mortar compl"
+  cable_manager:
+    rate: 1300.0
+    unit: "No."
+    description: "Supply, installation of cable manager."
+  ceiling_speaker:
+    rate: 3000.0
+    unit: "Nos."
+    description: "Providing, fixing, testing & commissioning of 6W Ceiling SPEAKER"
+  cement_plaster:
+    rate: 75.0
+    unit: "sft."
+    description: "Providing internal cement plaster in a single coat of cement sand to concrete an"
+  company_logo:
+    rate: 18000.0
+    unit: "Nos"
+    description: "Supply & installation of Company logo of Acrylic solid color as per company guid"
+  cpvc_piping:
+    rate: 18000.0
+    unit: "L.S"
+    description: "Supplying & fixing CPVC pipe , cpvc pipe specials such as elbows, tees, bends, u"
+  data_voice_point:
+    rate: 2850.0
+    unit: "Points"
+    description: "1 Data & 2 Voice for Reception Table."
+  debris_removal:
+    rate: 8500.0
+    unit: "nos"
+    description: "Truck charges for removing the debris from site till dumbing ground."
+  demolition:
+    rate: 25000.0
+    unit: "LS"
+    description: "Demolition of area wall as per sie condition and catering away the debris."
+  designer_hanging_light:
+    rate: 15000.0
+    unit: "Nos."
+    description: "Supply, Receiving, storing, handling, installation & commissioning of Designer H"
+  electrical_panel:
+    rate: 100000.0
+    unit: "nos."
+    description: "Providing & fixing of new Electrical Panel. Supply, installation, testing and co"
+  electrical_point:
+    rate: 2250.0
+    unit: "Points"
+    description: "2 UPS & 2 Raw Points for Reception."
+  floor_protection:
+    rate: 20000.0
+    unit: "L/S"
+    description: "Providing & fixing of Floor Protection PP sheet to protect the tiles for getting"
+  freestanding_table_of_size_1500_x_600_ma:
+    rate: 35000.0
+    unit: "Nos."
+    description: "Freestanding Table of size 1500 x 600 made of 25mm thick prelaminated particlebo"
+  freestanding_table_of_size_3000_x_1200_m:
+    rate: 42000.0
+    unit: "Nos."
+    description: "Freestanding Table of size 3000 x 1200 made of 25mm thick prelaminated particleb"
+  frosted_film:
+    rate: 110.0
+    unit: "sft."
+    description: "Supplying and Applying frosted film on glass partitions and doors as per archite"
+  full_height_storage:
+    rate: 1400.0
+    unit: "sft"
+    description: "Full ht. storage with openable shutters not more than 16' wide per shutter, in l"
+  gi_rafter:
+    rate: 985.0
+    unit: "sft"
+    description: "Supply & Installation of GI rafters as per design."
+  glass_door_toughened:
+    rate: 42000.0
+    unit: "Nos."
+    description: "PROVIDE & FIXING SINGLE LEAF GLASS DOOR  WITH ORNO HARDWARE TOP BOTTAM PIVOT OR "
+  glass_partition_aluminium:
+    rate: 650.0
+    unit: "sft"
+    description: "Single Glazed Glass Partition with Aluminium Frame  Black Anodised Matt finish a"
+  granite_counter:
+    rate: 1300.0
+    unit: "rft."
+    description: "Providing & fabricating wash basin counter top, 600 mm deep / 750 mm high from 1"
+  granite_jamb:
+    rate: 550.0
+    unit: "rft."
+    description: "Providing and fixing sandwich type  door jambs as per the detail given of granit"
+  gyproc_bond:
+    rate: 30.0
+    unit: "sft."
+    description: "Providing and applying of gyproc bond on all coumns to take POP."
+  gypsum_false_ceiling:
+    rate: 160.0
+    unit: "sft."
+    description: "Providing and fixing suspended false ceiling consisting of 12.5mm thick Gypsum p"
+  gypsum_partition_full:
+    rate: 200.0
+    unit: "sft."
+    description: "Providing & fixing 75 mm thk partition to take gypboard finish on both sides on "
+  hdmi_cable:
+    rate: 9500.0
+    unit: "nos."
+    description: "HDMI cable for in Meeting Room & Board room."
+  high_back_chair:
+    rate: 8000.0
+    unit: "Nos"
+    description: "Supply of High back chair"
+  high_storage:
+    rate: 1100.0
+    unit: "sft."
+    description: "Providing and fixing 2100mm high storages of  600 mm deep in 18mm thick  ply wit"
+  led_linear_light_1200:
+    rate: 8500.0
+    unit: "Nos."
+    description: "Supply, Receiving, storing, handling, installation & commissioning of 1200 mm le"
+  led_linear_profile:
+    rate: 1250.0
+    unit: "Rft"
+    description: "Supply, Receiving, storing, handling, installation & commissioning of LED Linear"
+  led_spot_light:
+    rate: 2950.0
+    unit: "Nos."
+    description: "Supply, Receiving, storing, handling, installation & commissioning of LED spot l"
+  linear_workstation:
+    rate: 2250.0
+    unit: "Points"
+    description: "2 UPS & 1 Raw Points for each Workstation."
+  loading_unloading:
+    rate: 50000.0
+    unit: "LS"
+    description: "Loading/ Unloading of all the materials."
+  low_height_storage:
+    rate: 1200.0
+    unit: "sft"
+    description: "Low ht. storage with openable shutters not more than 16' wide per shutter, in la"
+  lustre_paint:
+    rate: 35.0
+    unit: "sft."
+    description: "Lustre Paint (for partition & walls):  Providing and applying of Lustre paint of"
+  mathadi_cost:
+    rate: 40000.0
+    unit: "LS"
+    description: "Mathadi cost."
+  medium_back_chair:
+    rate: 6000.0
+    unit: "Nos"
+    description: "Supply of Medium back chairs for complete office."
+  metalworks_open_cell:
+    rate: 390.0
+    unit: "sft."
+    description: "Providing and fixing suspended METALWORKS Open Cell False ceiling, finished with"
+  number_of_leaves_:1:
+    rate: 27000.0
+    unit: "Nos."
+    description: "Number of Leaves :1"
+  overhead_storage:
+    rate: 1400.0
+    unit: "sft."
+    description: "Providing and fixing 750mm high over head storages of  450mm deep in 18mm thick "
+  patch_cord:
+    rate: 950.0
+    unit: "No."
+    description: "Providing and installing 7' patch cord."
+  patch_panel:
+    rate: 7500.0
+    unit: "No."
+    description: "Providing and installing 24 port Patch panel."
+  pcc_flooring:
+    rate: 150.0
+    unit: "sft."
+    description: "Providing and laying up to 150-200mm thick cement concrete flooring with cement,"
+  pelmet:
+    rate: 750.0
+    unit: "rft."
+    description: "Providing and fixing 18mm. Thk. Commercial plywood Pelmet for Blinds near extern"
+  plastic_emulsion_paint:
+    rate: 31.0
+    unit: "sft."
+    description: "Plastic Emulsion Paint (for ceilings):  Providing and applying of Plastic emulsi"
+  ply_panelling:
+    rate: 950.0
+    unit: "rft"
+    description: "Providing & fixing  ply Panelling on door using 12mm thk standard commercial ply"
+  ply_partition:
+    rate: 950.0
+    unit: "sft."
+    description: "Providing & fixing  ply partition on both sides using 12mm thk standard commerci"
+  ply_table_full_height:
+    rate: 1500.0
+    unit: "sft."
+    description: "Providing and fixing full height table in ply with 18mm thick ply, approved shad"
+  pop_punning:
+    rate: 50.0
+    unit: "sft."
+    description: "Providing and applying punning  up to 8 to10mm thick layer of Plaster of Paris a"
+  profile_light_installation:
+    rate: 180.0
+    unit: "Rft"
+    description: "Supply, Receiving, storing upto to 30 mm profile light installation on ceiling &"
+  providing_and_fixing_a_desk_of_over_all:
+    rate: 115000.0
+    unit: "nos."
+    description: "Providing and fixing a desk of over all size of                                 "
+  providing_and_fixing_m_s_frame_4"x4"thic:
+    rate: 265000.0
+    unit: "L/S"
+    description: "Providing and fixing M S Frame 4"x4"Thick squre pipe Supply & Installation as pe"
+  push_pull_set:
+    rate: 550.0
+    unit: "Nos"
+    description: "Push & Pull Set in SS plate."
+  robe_hook:
+    rate: 1300.0
+    unit: "nos."
+    description: "Providing and fixing approved make CP twin robe hook with CP screws etc., comple"
+  rockwool_insulation:
+    rate: 80.0
+    unit: "sft"
+    description: "Providing & fixing of 50mm thick Rock wool of density 48kg/m3 suitably affixed t"
+  room_signage:
+    rate: 1250.0
+    unit: "Nos"
+    description: "Room Signage as per design."
+  site_cleaning:
+    rate: 20000.0
+    unit: "LS"
+    description: "Site cleaning of site before handover of site with chemical cleaning of glasses,"
+  small_pots_plants:
+    rate: 15000.0
+    unit: "LS"
+    description: "Supply of small 6" pots with plants above storage & 6 nos. 4' ht planters."
+  smoke_detector:
+    rate: 140.0
+    unit: "Sq.ft"
+    description: "Supply, Installation & Testing of Smoke detector."
+  soap_dispenser:
+    rate: 6500.0
+    unit: "nos."
+    description: "Providing and fixing Liquid soap dispenser of approved make at required heights "
+  speaker_wiring:
+    rate: 110.0
+    unit: "Rmtrs"
+    description: "Providing & fixing of speaker wiring in PVC conduit."
+  sprinkler_point:
+    rate: 110.0
+    unit: "Sq.ft"
+    description: "Supply, installation & Testing of Sprinkler Point Complete with required Flexibl"
+  ss_sink:
+    rate: 12000.0
+    unit: "nos."
+    description: "Providing & fixing S.S. Sink of specified size with Floor mounted pillar cock, b"
+  supplying_and_fixing_of_rollerblinds_for:
+    rate: 160.0
+    unit: "sft."
+    description: "Supplying and Fixing of Rollerblinds for entire glass façade area as approved by"
+  toilet_roll_holder:
+    rate: 1300.0
+    unit: "nos."
+    description: "Providing and fixing Toilet roll holder  at indicated height as per drawings Loc"
+  top_of_size_1200_x_600_x_1200_mm_m:
+    rate: 23000.0
+    unit: "Nos."
+    description: "Work top of size 1200 x 600 x 1200  mm made of 25mm thick prelaminated particleb"
+  vertical_planter:
+    rate: 20000.0
+    unit: "LS"
+    description: "Supply of vertical planters, including pebbles  nearby executive waiting area."
+  vitrified_flooring:
+    rate: 250.0
+    unit: "sft."
+    description: "Providing and laying flooring with1200 mm x 600 mm Vitrified Tiles approved make"
+  vitrified_skirting:
+    rate: 110.0
+    unit: "rft."
+    description: "Providing and laying vitrified tiles skirting of approved shade and make in ceme"
+  volume_controller:
+    rate: 1950.0
+    unit: "Nos."
+    description: "Providing, fixing, testing & commissioning of  Volume Controller"
+  vrv_system:
+    rate: 510.0
+    unit: "Sqft"
+    description: "Supply and installation of copper refrigerant piping, drain piping, and electric"
+  wallpaper:
+    rate: 7000.0
+    unit: "Roll"
+    description: "Supplying and Applying wallpaper on wall as per architects design."

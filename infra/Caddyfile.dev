@@ -1,0 +1,22 @@
+# Auto Cost Engine - Development Caddyfile
+# HTTP-only reverse proxy for local development
+#
+# This is the **local dev** version.  For production deployment use
+# ``Caddyfile`` (which includes TLS, security headers, etc.).
+
+localhost:80 {
+    # API requests go to the backend
+    handle_path /api/* {
+        reverse_proxy backend:8000
+    }
+
+    # Auth requests go to Keycloak
+    handle_path /auth/* {
+        reverse_proxy keycloak:8080
+    }
+
+    # Everything else goes to the frontend
+    handle {
+        reverse_proxy frontend:5173
+    }
+}

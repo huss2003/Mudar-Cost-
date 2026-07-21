@@ -1,0 +1,500 @@
+# Auto Cost Engine — BOQ Expansion Rule Library
+# Each rule defines how a detected object type expands into line items
+# with quantity formulas, materials, labour, and wastage.
+
+rules:
+  - object_type: gypsum_partition
+    name: "Gypsum Board Partition"
+    description: "Standard 4-inch (100mm) gypsum partition with metal stud frame, gypsum boards both sides, insulation, finishing"
+    trade: partition
+    formula: "Area (sqm) = Length × Height"
+    sub_items:
+      - material_code: metal_stud_75mm
+        description: "Galvanized metal stud 75mm @ 600mm centers"
+        formula: "ceil(L / 0.6) + 1"
+        unit: nos
+        default_material: "Metal Stud 75mm"
+        wastage_pct: 3
+        trade: partition
+
+      - material_code: channel_75mm
+        description: "Galvanized channel 75mm top & bottom"
+        formula: "L * 2"
+        unit: lnm
+        default_material: "Channel 75mm"
+        wastage_pct: 3
+        trade: partition
+
+      - material_code: gypsum_board_12mm
+        description: "Gypsum board 12mm (two layers each side)"
+        formula: "A * 4"
+        unit: sqm
+        default_material: "Gypsum Board 12mm"
+        wastage_pct: 7
+        trade: partition
+
+      - material_code: insulation_50mm
+        description: "Glass wool insulation 50mm"
+        formula: "A"
+        unit: sqm
+        default_material: "Glass Wool Insulation 50mm"
+        wastage_pct: 3
+        trade: partition
+
+      - material_code: drywall_screws
+        description: "Drywall screws 25mm"
+        formula: "A * 25"
+        unit: nos
+        default_material: "Drywall Screws 25mm"
+        wastage_pct: 5
+        trade: partition
+
+      - material_code: joint_tape
+        description: "Joint tape for gypsum boards"
+        formula: "H * 2 * 2"
+        unit: lnm
+        default_material: "Joint Tape 50mm"
+        wastage_pct: 5
+        trade: partition
+
+      - material_code: joint_compound
+        description: "Joint compound (20 kg bag)"
+        formula: "ceil(A * 0.3)"
+        unit: kg
+        default_material: "Joint Compound"
+        wastage_pct: 10
+        trade: partition
+
+      - material_code: skim_coat
+        description: "Skim coat putty"
+        formula: "A * 2"
+        unit: sqm
+        default_material: "Skim Coat Putty"
+        wastage_pct: 10
+        trade: painting
+
+      - material_code: primer
+        description: "Water-based primer"
+        formula: "A * 2"
+        unit: sqm
+        default_material: "Water Based Primer"
+        wastage_pct: 10
+        trade: painting
+
+      - material_code: emulsion_paint
+        description: "Interior emulsion paint (2 coats)"
+        formula: "A * 2 * 2"
+        unit: sqm
+        default_material: "Interior Emulsion Paint"
+        wastage_pct: 10
+        trade: painting
+
+      - labour_code: partition_labour
+        description: "Partition installation labour"
+        formula: "A"
+        unit: sqm
+        trade: partition
+        skill_level: skilled
+        crew_size: 2
+
+      - labour_code: painting_labour
+        description: "Painting labour (putty + primer + paint)"
+        formula: "A * 2"
+        unit: sqm
+        trade: painting
+        skill_level: skilled
+        crew_size: 1
+
+  - object_type: false_ceiling
+    name: "False Ceiling (POP/Gypsum)"
+    description: "False ceiling with metal grid, gypsum/POP boards, and finishing"
+    trade: ceiling
+    formula: "Area (sqm) = Length × Width"
+    sub_items:
+      - material_code: ceiling_grid_primary
+        description: "Primary T-grid @1200mm centers"
+        formula: "ceil(L / 1.2) * W"
+        unit: lnm
+        default_material: "T-Grid Primary 3600mm"
+        wastage_pct: 3
+        trade: ceiling
+
+      - material_code: ceiling_grid_cross
+        description: "Cross T-grid @600mm centers"
+        formula: "ceil(W / 0.6) * L"
+        unit: lnm
+        default_material: "T-Grid Cross 1200mm"
+        wastage_pct: 3
+        trade: ceiling
+
+      - material_code: ceiling_board
+        description: "Gypsum ceiling board 12mm"
+        formula: "A"
+        unit: sqm
+        default_material: "Gypsum Ceiling Board 12mm"
+        wastage_pct: 7
+        trade: ceiling
+
+      - material_code: ceiling_wall_angle
+        description: "Wall angle L-section"
+        formula: "(L + W) * 2"
+        unit: lnm
+        default_material: "Wall Angle 25mm"
+        wastage_pct: 3
+        trade: ceiling
+
+      - material_code: ceiling_hangers
+        description: "Adjustable hangers @1200mm centers"
+        formula: "ceil(L / 1.2) * ceil(W / 1.2)"
+        unit: nos
+        default_material: "Adjustable Hanger Assembly"
+        wastage_pct: 2
+        trade: ceiling
+
+      - material_code: pop_finish
+        description: "POP finishing (if applicable)"
+        formula: "A"
+        unit: sqm
+        default_material: "POP Finish"
+        wastage_pct: 10
+        trade: ceiling
+
+      - material_code: ceiling_primer
+        description: "Ceiling primer"
+        formula: "A"
+        unit: sqm
+        default_material: "Ceiling Primer"
+        wastage_pct: 10
+        trade: painting
+
+      - material_code: ceiling_paint
+        description: "Ceiling emulsion paint (2 coats)"
+        formula: "A * 2"
+        unit: sqm
+        default_material: "Ceiling Emulsion Paint"
+        wastage_pct: 10
+        trade: painting
+
+      - labour_code: ceiling_labour
+        description: "False ceiling installation labour"
+        formula: "A"
+        unit: sqm
+        trade: ceiling
+        skill_level: skilled
+        crew_size: 2
+
+  - object_type: carpet_flooring
+    name: "Carpet Flooring Installation"
+    description: "Broadloom or modular carpet tile installation over underlay"
+    trade: flooring
+    formula: "Area (sqm) = Length × Width"
+    sub_items:
+      - material_code: carpet
+        description: "Carpet (broadloom or tiles)"
+        formula: "A * 1.05"
+        unit: sqm
+        default_material: "Commercial Carpet"
+        wastage_pct: 5
+        trade: flooring
+
+      - material_code: carpet_underlay
+        description: "Carpet underlay foam"
+        formula: "A"
+        unit: sqm
+        default_material: "Carpet Underlay"
+        wastage_pct: 3
+        trade: flooring
+
+      - material_code: carpet_adhesive
+        description: "Carpet adhesive / double-sided tape"
+        formula: "ceil(A * 0.1)"
+        unit: ltr
+        default_material: "Carpet Adhesive"
+        wastage_pct: 5
+        trade: flooring
+
+      - material_code: carpet_gripper
+        description: "Carpet gripper (for broadloom)"
+        formula: "(L + W) * 2"
+        unit: lnm
+        default_material: "Carpet Gripper"
+        wastage_pct: 2
+        trade: flooring
+
+      - labour_code: flooring_labour
+        description: "Carpet laying labour"
+        formula: "A"
+        unit: sqm
+        trade: flooring
+        skill_level: skilled
+        crew_size: 2
+
+  - object_type: vitrified_tiles
+    name: "Vitrified Tile Flooring"
+    description: "Vitrified tile laying with screed and grouting"
+    trade: flooring
+    formula: "Area (sqm) = Length × Width"
+    sub_items:
+      - material_code: vitrified_tile
+        description: "Vitrified tiles 600×600mm"
+        formula: "A * 1.08"
+        unit: sqm
+        default_material: "Vitrified Tile 600x600mm"
+        wastage_pct: 8
+        trade: flooring
+
+      - material_code: tile_adhesive
+        description: "Tile adhesive / mortar"
+        formula: "ceil(A * 4)"
+        unit: kg
+        default_material: "Tile Adhesive"
+        wastage_pct: 5
+        trade: flooring
+
+      - material_code: tile_grout
+        description: "Tile grout (white/grey)"
+        formula: "ceil(A * 0.3)"
+        unit: kg
+        default_material: "Tile Grout"
+        wastage_pct: 10
+        trade: flooring
+
+      - material_code: screed_mortar
+        description: "Cement screed 50mm thick"
+        formula: "A * 0.05"
+        unit: cum
+        default_material: "Cement Screed"
+        wastage_pct: 5
+        trade: civil
+
+      - labour_code: tiling_labour
+        description: "Tile laying labour"
+        formula: "A"
+        unit: sqm
+        trade: flooring
+        skill_level: skilled
+        crew_size: 2
+
+  - object_type: paint_wall
+    name: "Wall Painting"
+    description: "Interior wall painting with putty, primer, and emulsion"
+    trade: painting
+    formula: "Area (sqm) = (L + W) * 2 * H - openings"
+    sub_items:
+      - material_code: wall_putty
+        description: "Wall care putty (1 coat)"
+        formula: "A"
+        unit: sqm
+        default_material: "Wall Care Putty"
+        wastage_pct: 10
+        trade: painting
+
+      - material_code: wall_primer
+        description: "Water-based primer (1 coat)"
+        formula: "A"
+        unit: sqm
+        default_material: "Water Based Primer"
+        wastage_pct: 10
+        trade: painting
+
+      - material_code: emulsion_paint
+        description: "Interior emulsion paint (2 coats)"
+        formula: "A * 2"
+        unit: sqm
+        default_material: "Interior Emulsion Paint"
+        wastage_pct: 15
+        trade: painting
+
+      - material_code: masking_tape
+        description: "Masking tape"
+        formula: "ceil(A * 0.05)"
+        unit: roll
+        default_material: "Masking Tape"
+        wastage_pct: 5
+        trade: painting
+
+      - material_code: sandpaper
+        description: "Sandpaper sheets"
+        formula: "ceil(A * 0.02)"
+        unit: sht
+        default_material: "Sandpaper 120 Grit"
+        wastage_pct: 10
+        trade: painting
+
+      - labour_code: painting_labour
+        description: "Painting labour"
+        formula: "A"
+        unit: sqm
+        trade: painting
+        skill_level: skilled
+        crew_size: 1
+
+  - object_type: glass_partition
+    name: "Glass Partition (Frameless)"
+    description: "Toughened glass partition with clamps and SS fittings"
+    trade: glass
+    formula: "Area (sqm) = Length × Height"
+    sub_items:
+      - material_code: tg_glass_12mm
+        description: "Toughened glass 12mm clear"
+        formula: "A * 1.02"
+        unit: sqm
+        default_material: "Toughened Glass 12mm"
+        wastage_pct: 2
+        trade: glass
+
+      - material_code: glass_clamp
+        description: "SS glass clamp / spider fitting"
+        formula: "ceil((L + W) * 2 / 0.8)"
+        unit: nos
+        default_material: "SS Glass Clamp"
+        wastage_pct: 1
+        trade: glass
+
+      - material_code: glass_channel
+        description: "Glass channel (floor & ceiling)"
+        formula: "L * 2"
+        unit: lnm
+        default_material: "Glass Channel"
+        wastage_pct: 2
+        trade: glass
+
+      - material_code: structural_silicone
+        description: "Structural silicone sealant"
+        formula: "ceil(L * 0.05)"
+        unit: nos
+        default_material: "Structural Silicone"
+        wastage_pct: 5
+        trade: glass
+
+      - labour_code: glass_labour
+        description: "Glass installation labour"
+        formula: "A"
+        unit: sqm
+        trade: glass
+        skill_level: skilled
+        crew_size: 2
+
+  - object_type: wood_door
+    name: "Wooden Door with Frame"
+    description: "Flush door with wooden frame, hardware, and finishing"
+    trade: carpentry
+    formula: "Per door"
+    sub_items:
+      - material_code: flush_door_35mm
+        description: "Flush door 35mm (0.9m × 2.1m)"
+        formula: "1"
+        unit: nos
+        default_material: "Flush Door 35mm"
+        wastage_pct: 1
+        trade: carpentry
+
+      - material_code: door_frame
+        description: "Door frame 75mm × 50mm"
+        formula: "(2.1 * 2 + 0.9)"
+        unit: lnm
+        default_material: "Door Frame Timber"
+        wastage_pct: 5
+        trade: carpentry
+
+      - material_code: door_handle
+        description: "SS door handle set"
+        formula: "1"
+        unit: set
+        default_material: "SS Door Handle Set"
+        wastage_pct: 0
+        trade: carpentry
+
+      - material_code: door_hinges
+        description: "SS butt hinges 100mm"
+        formula: "3"
+        unit: nos
+        default_material: "SS Butt Hinge 100mm"
+        wastage_pct: 0
+        trade: carpentry
+
+      - material_code: door_lock
+        description: "Mortise lock"
+        formula: "1"
+        unit: nos
+        default_material: "Mortise Lock"
+        wastage_pct: 0
+        trade: carpentry
+
+      - material_code: door_stopper
+        description: "Door stopper"
+        formula: "1"
+        unit: nos
+        default_material: "Door Stopper"
+        wastage_pct: 0
+        trade: carpentry
+
+      - material_code: enamel_paint
+        description: "Enamel paint for door + frame (2 coats)"
+        formula: "4.2"
+        unit: sqm
+        default_material: "Enamel Paint"
+        wastage_pct: 10
+        trade: painting
+
+      - labour_code: carpentry_labour
+        description: "Door installation labour"
+        formula: "1"
+        unit: nos
+        trade: carpentry
+        skill_level: skilled
+        crew_size: 1
+
+  - object_type: electrical_point
+    name: "Electrical Point Wiring"
+    description: "Electrical switch/socket point with wiring, conduit, and accessories"
+    trade: electrical
+    formula: "Per point"
+    sub_items:
+      - material_code: pvc_conduit_20mm
+        description: "PVC conduit 20mm"
+        formula: "10"
+        unit: lnm
+        default_material: "PVC Conduit 20mm"
+        wastage_pct: 5
+        trade: electrical
+
+      - material_code: copper_wire_1_5
+        description: "Copper wire 1.5 sqmm (for light points)"
+        formula: "15"
+        unit: lnm
+        default_material: "Copper Wire 1.5 sqmm"
+        wastage_pct: 5
+        trade: electrical
+
+      - material_code: copper_wire_2_5
+        description: "Copper wire 2.5 sqmm (for power points)"
+        formula: "15"
+        unit: lnm
+        default_material: "Copper Wire 2.5 sqmm"
+        wastage_pct: 5
+        trade: electrical
+
+      - material_code: switch_box
+        description: "PVC switch box"
+        formula: "1"
+        unit: nos
+        default_material: "PVC Switch Box"
+        wastage_pct: 2
+        trade: electrical
+
+      - material_code: switch_plate
+        description: "Modular switch plate"
+        formula: "1"
+        unit: set
+        default_material: "Modular Switch Plate"
+        wastage_pct: 2
+        trade: electrical
+
+      - labour_code: electrical_labour
+        description: "Electrical point labour"
+        formula: "1"
+        unit: point
+        trade: electrical
+        skill_level: skilled
+        crew_size: 1

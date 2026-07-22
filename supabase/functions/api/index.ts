@@ -137,9 +137,10 @@ async function listDrawings(projectId: number) {
 async function createDrawingRecord(body: any) {
   const row = {
     project_id: body.project_id,
-    name: body.name,
+    filename: body.name ?? '',
     file_path: body.file_path ?? null,
     file_size: body.file_size ?? null,
+    file_type: 'pdf',
     status: 'uploaded',
   };
   const { data, error } = await adminClient.from('drawings').insert(row).select().single();
@@ -163,10 +164,9 @@ async function detectDrawing(drawingId: number) {
   if (error) throw error;
   if (!drawing) throw Object.assign(new Error('Drawing not found'), { code: 'NOT_FOUND' });
 
-  // Resolve the image URL. PDF rasterisation isn't implemented in this function yet;
-  // callers are expected to upload a rasterised PNG alongside the drawing (file_path).
+  // Resolve the image URL with proper URL encoding for spaces/special chars
   const imageUrl = drawing.file_path
-    ? `${SUPABASE_URL}/storage/v1/object/public/drawings/${drawing.file_path}`
+    ? `${SUPABASE_URL}/storage/v1/object/public/drawings/${drawing.file_path.split('/').map(encodeURIComponent).join('/')}`
     : null;
   if (!imageUrl) throw Object.assign(new Error('Drawing has no rasterised image yet — upload a PNG to the drawings bucket'), { code: 'NO_IMAGE' });
 
@@ -310,6 +310,9 @@ async function computeQuantities(projectId: number, drawingId?: number) {
     const { error: insErr } = await adminClient.from('boq_items').insert(rows);
     if (insErr) throw insErr;
   }
+
+  // Touch project timestamp so SSE listeners detect a change and re-fetch
+  await adminClient.from('projects').update({ updated_at: new Date().toISOString() }).eq('id', projectId);
 
   return { project_id: projectId, items_written: rows.length, lines: rows };
 }
@@ -630,7 +633,7 @@ serve(async (req) => {
       // Minimal insert: only documented columns. Legacy `filename` is NOT NULL
       // varchar(10) — truncate to 8 chars. Anything we don't name here is
       // either NULL or has a Postgres default.
-      const safeFilename = String(name).slice(0, 8);
+      const safeFilename = String(name);
       const safeFileType = (file.type || 'application/pdf').slice(0, 50);
       const insert = await adminClient.from('drawings').insert({
         project_id: pid,
@@ -678,6 +681,11 @@ serve(async (req) => {
       if (m && method === 'GET') return ok(await listDetectedObjects(Number(m[1])));
     }
     if (path === '/drawings/types' && method === 'GET') return ok(await objectTypes());
+    // Trigger AI detection on a drawing
+    {
+      const m = path.match(/^\/drawings\/(\d+)\/detect$/);
+      if (m && method === 'POST') return ok(await detectDrawing(Number(m[1])));
+    }
 
     // BOQ
     {
@@ -695,6 +703,14 @@ serve(async (req) => {
     {
       const m = path.match(/^\/projects\/(\d+)\/cost-versions$/);
       if (m && method === 'GET') return ok(await listCostVersions(Number(m[1])));
+    }
+    // Compute costs (triggers cost version creation)
+    {
+      const m = path.match(/^\/projects\/(\d+)\/compute-costs$/);
+      if (m && method === 'POST') {
+        const b = await req.json().catch(() => ({}));
+        return ok(await computeCosts(Number(m[1]), b.markup_pct ?? 15, b.contingency_pct ?? 5));
+      }
     }
 
     // Materials

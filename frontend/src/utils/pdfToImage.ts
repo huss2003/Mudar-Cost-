@@ -1,7 +1,23 @@
-import * as pdfjsLib from 'pdfjs-dist';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+/**
+ * PDF → PNG conversion using pdfjs-dist.
+ * Falls back gracefully if CDN worker is blocked.
+ */
+let pdfjsLib: typeof import('pdfjs-dist') | null = null;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+async function getPdfLib() {
+  if (!pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist');
+    // Try to set worker — if CDN is blocked, disable it (slower but works)
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    } catch {
+      // CDN blocked — use main thread (slower but functional)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    }
+  }
+  return pdfjsLib;
+}
 
 /**
  * Convert a PDF File into an array of PNG File objects (one per page).
@@ -11,8 +27,9 @@ export async function convertPdfToImages(
   file: File,
   scale = 2
 ): Promise<File[]> {
+  const lib = await getPdfLib();
   const arrayBuffer = await file.arrayBuffer();
-  const pdf: PDFDocumentProxy = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await lib.getDocument({ data: arrayBuffer, useSystemFonts: true }).promise;
 
   const pages: File[] = [];
 
@@ -25,9 +42,7 @@ export async function convertPdfToImages(
     canvas.height = viewport.height;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Failed to get 2D canvas context');
-    }
+    if (!ctx) throw new Error('Failed to get 2D canvas context');
 
     await page.render({ canvas, canvasContext: ctx, viewport }).promise;
 
@@ -44,11 +59,8 @@ function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error('Canvas toBlob returned null'));
-        }
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas toBlob returned null'));
       },
       'image/png',
       1

@@ -1,25 +1,14 @@
 {
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
-    }
-  ],
+  "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "installCommand": "cd frontend && npm install",
-  "buildCommand": "cd frontend && npm run build",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ],
   "env": {
-    "ENVIRONMENT": "production",
-    "SUPABASE_URL": "https://pecnshwflkwpnwiskgmg.supabase.co",
-    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_GMkHBBICoUbKeg5W1UGtFg_Y-_xU0yb",
-    "MIMO_API_KEY": "sk-sj2opp4kpvdf8lg25py9mzjo1frd1w7uw65u1hquck807kx2"
+    "VITE_ENVIRONMENT": "production",
+    "VITE_SUPABASE_URL": "https://pecnshwflkwpnwiskgmg.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "sb_publishable_GMkHBBICoUbKeg5W1UGtFg_Y-_xU0yb"
   }
 }

@@ -11,7 +11,7 @@ export interface Drawing {
   width_mm: number;
   height_mm: number;
   created_at: string;
-  status: 'uploaded' | 'pending' | 'processing' | 'processed' | 'error';
+  status: 'uploaded' | 'pending' | 'processing' | 'processed' | 'detected' | 'error';
   project_id?: number;
 }
 
@@ -19,7 +19,7 @@ export interface DrawingUploadResponse {
   drawing_id: number;
   project_id: number;
   file_path: string;
-  status: 'uploaded' | 'pending' | 'processing' | 'processed' | 'error';
+  status: 'uploaded' | 'pending' | 'processing' | 'processed' | 'detected' | 'error';
   task_id: string | null;
   task_routing_hint: string | null;
 }

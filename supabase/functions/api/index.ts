@@ -627,15 +627,18 @@ serve(async (req) => {
         storagePath, file, { contentType: file.type || 'application/octet-stream', upsert: true },
       );
       if (up.error) return fail('STORAGE', `upload failed: ${up.error.message}`, 500);
-      // Populate every legacy column I know about so the insert doesn't
-      // hit a NOT NULL constraint we haven't discovered yet. New columns
-      // from the migration (`name`, `file_path`, `file_size`, `width_mm`,
-      // `height_mm`, `detected_at`) are set as well.
+      // The legacy `drawings` table has tight varchar limits on some
+      // legacy columns (e.g., filename varchar(10)). Truncate everything
+      // to short safe values so we never hit a "value too long" error.
+      const shortName = String(name).slice(0, 50);
+      const shortFilename = String(name).slice(0, 8);
+      const shortType = (file.type || 'pdf').slice(0, 10);
       const insert = await adminClient.from('drawings').insert({
         project_id: pid,
         name,
-        filename: name,
-        file_type: file.type || 'application/octet-stream',
+        filename: shortFilename,
+        file_name: shortFilename,
+        file_type: shortType,
         file_path: storagePath,
         minio_object_key: storagePath,
         file_size: size,
@@ -644,7 +647,7 @@ serve(async (req) => {
         upload_date: new Date().toISOString(),
         status: 'uploaded',
         revision: 1,
-        scale: '1:100',
+        scale: '1',
         page_count: 0,
         is_deleted: false,
       }).select().single();

@@ -15,71 +15,31 @@ describe('useAuthStore', () => {
     localStorage.clear();
   });
 
-  it('should initialise with default values (no auth)', async () => {
+  it('should start with a fake authenticated user', async () => {
     const { useAuthStore } = await import('../store/auth');
     const state = useAuthStore.getState();
-    expect(state.token).toBeNull();
-    expect(state.refreshToken).toBeNull();
-    expect(state.user).toBeNull();
-    expect(state.isAuthenticated).toBe(false);
-    expect(state.isInitialized).toBe(false);
-  });
-
-  it('should update state on login()', async () => {
-    const { useAuthStore } = await import('../store/auth');
-    const user = {
-      sub: 'abc123',
-      email: 'test@example.com',
-      name: 'Test User',
-      roles: ['admin'],
-    };
-
-    useAuthStore.getState().login('my-access-token', 'my-refresh-token', user);
-
-    const state = useAuthStore.getState();
-    expect(state.token).toBe('my-access-token');
-    expect(state.refreshToken).toBe('my-refresh-token');
-    expect(state.user).toEqual(user);
     expect(state.isAuthenticated).toBe(true);
+    expect(state.isLoading).toBe(false);
+    expect(state.user).not.toBeNull();
+    expect(state.user?.sub).toBe('anonymous');
+    expect(state.user?.email).toBe('user@example.com');
+    expect(state.user?.name).toBe('Demo User');
+    expect(state.user?.roles).toEqual(['admin']);
   });
 
-  it('should clear state on logout()', async () => {
+  it('should provide a no-op checkAuth', async () => {
     const { useAuthStore } = await import('../store/auth');
-    // Login first
-    useAuthStore.getState().login('token', 'refresh', {
-      sub: 'abc', email: 'a@b.com', name: 'A', roles: [],
-    });
-    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    await expect(useAuthStore.getState().checkAuth()).resolves.toBeUndefined();
+  });
 
-    // Logout
+  it('should provide a no-op logout that does nothing', async () => {
+    const { useAuthStore } = await import('../store/auth');
+    const stateBefore = useAuthStore.getState();
     useAuthStore.getState().logout();
-    const state = useAuthStore.getState();
-    expect(state.token).toBeNull();
-    expect(state.refreshToken).toBeNull();
-    expect(state.user).toBeNull();
-    expect(state.isAuthenticated).toBe(false);
-  });
-
-  it('should update tokens via setTokens()', async () => {
-    const { useAuthStore } = await import('../store/auth');
-    useAuthStore.getState().setTokens('new-token', 'new-refresh');
-    const state = useAuthStore.getState();
-    expect(state.token).toBe('new-token');
-    expect(state.refreshToken).toBe('new-refresh');
-  });
-
-  it('should set initialized', async () => {
-    const { useAuthStore } = await import('../store/auth');
-    expect(useAuthStore.getState().isInitialized).toBe(false);
-    useAuthStore.getState().setInitialized();
-    expect(useAuthStore.getState().isInitialized).toBe(true);
-  });
-
-  it('should build loginUrl', async () => {
-    const { useAuthStore } = await import('../store/auth');
-    const state = useAuthStore.getState();
-    expect(state.loginUrl).toContain('openid-connect/auth');
-    expect(state.loginUrl).toContain('response_type=code');
+    const stateAfter = useAuthStore.getState();
+    // State should remain unchanged (no-op)
+    expect(stateAfter.isAuthenticated).toBe(true);
+    expect(stateAfter.user).toEqual(stateBefore.user);
   });
 });
 

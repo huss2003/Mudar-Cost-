@@ -1,4 +1,4 @@
-import { AppShell, NavLink, Title, Group, Text, Avatar, Menu, UnstyledButton } from '@mantine/core';
+import { AppShell, NavLink, Title, Group } from '@mantine/core';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   IconComponents,
@@ -7,11 +7,7 @@ import {
   IconCurrencyDollar,
   IconBrain,
   IconFileExport,
-  IconLogout,
-  IconUser,
 } from '@tabler/icons-react';
-import { useAuthStore } from '../store/auth';
-import { logout as apiLogout } from '../api/client';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sphere, MeshDistortMaterial } from '@react-three/drei';
 
@@ -49,16 +45,6 @@ function ThreeBackground() {
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated } = useAuthStore();
-
-  const handleLogout = async () => {
-    await apiLogout();
-    navigate('/login');
-  };
-
-  if (!isAuthenticated) {
-    return null;
-  }
 
   return (
     <AppShell
@@ -68,33 +54,9 @@ export default function Layout() {
     >
       <ThreeBackground />
       <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Group>
-            <IconComponents size={28} color="#228be6" />
-            <Title order={4}>Auto Cost Engine</Title>
-          </Group>
-          <Menu shadow="md" width={200}>
-            <Menu.Target>
-              <UnstyledButton>
-                <Group gap="xs">
-                  <Avatar size="sm" radius="xl" color="blue">
-                    {user?.name?.charAt(0).toUpperCase() || 'U'}
-                  </Avatar>
-                  <Text size="sm">{user?.name || 'User'}</Text>
-                </Group>
-              </UnstyledButton>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item leftSection={<IconUser size={16} />}>Profile</Menu.Item>
-              <Menu.Item
-                leftSection={<IconLogout size={16} />}
-                color="red"
-                onClick={handleLogout}
-              >
-                Sign out
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+        <Group h="100%" px="md">
+          <IconComponents size={28} color="#228be6" />
+          <Title order={4}>Auto Cost Engine</Title>
         </Group>
       </AppShell.Header>
 

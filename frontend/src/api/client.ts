@@ -1,5 +1,4 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { useAuthStore } from '../store/auth';
 
 const client = axios.create({
   baseURL: '/api/v1',
@@ -8,41 +7,11 @@ const client = axios.create({
   },
 });
 
-// Track if we're already refreshing to avoid infinite loops
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (error: unknown) => void;
-}> = [];
-
-function processQueue(error: unknown, token: string | null = null) {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
-    } else if (token) {
-      resolve(token);
-    }
-  });
-  failedQueue = [];
-}
-
-client.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const { token } = useAuthStore.getState();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
 // ─── Response Interceptor ─────────────────────────────────────────────────
 //  1. Normalises the structured error envelope (trace_id, code, message)
 //     into a consistent error message for the UI.
 //  2. Retries GET requests up to 2 times on 5xx (server errors) with
 //     exponential backoff.
-//  3. Handles 401 → token refresh flow (existing).
 // ─────────────────────────────────────────────────────────────────────────
 
 // Track retry attempts per request to avoid infinite loops
@@ -94,48 +63,6 @@ client.interceptors.response.use(
       };
     }
 
-    // ── 401 → token refresh (existing flow) ──────────────────────────
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // Don't try refresh on the auth endpoints themselves
-      if (
-        originalRequest.url?.includes('/auth/refresh') ||
-        originalRequest.url?.includes('/auth/token-exchange') ||
-        originalRequest.url?.includes('/auth/logout')
-      ) {
-        useAuthStore.getState().logout();
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-
-      if (isRefreshing) {
-        // Queue this request until the refresh completes
-        return new Promise<string>((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then((newToken) => {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return client(originalRequest);
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        await useAuthStore.getState().refreshAccessToken();
-        const newToken = useAuthStore.getState().token;
-        processQueue(null, newToken);
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return client(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        useAuthStore.getState().logout();
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-
     // ── Retry GET requests on 5xx with exponential backoff ────────────
     if (shouldRetry(error, originalRequest)) {
       originalRequest._retryCount = (originalRequest._retryCount ?? 0) + 1;
@@ -151,18 +78,5 @@ client.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
-export async function logout() {
-  try {
-    const { refreshToken } = useAuthStore.getState();
-    await client.post('/auth/logout', {
-      refresh_token: refreshToken || '',
-    });
-  } catch {
-    // Best-effort; clear local state regardless
-  } finally {
-    useAuthStore.getState().logout();
-  }
-}
 
 export default client;

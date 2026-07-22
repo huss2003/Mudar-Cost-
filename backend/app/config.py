@@ -56,10 +56,10 @@ class Settings(BaseSettings):
     )
 
     # ── Keycloak (OIDC) ──────────────────────────────────────────────────────
-    KEYCLOAK_URL: str = Field(..., alias="KEYCLOAK_URL")
-    KEYCLOAK_REALM: str = Field(..., alias="KEYCLOAK_REALM")
-    KEYCLOAK_CLIENT_ID: str = Field(..., alias="KEYCLOAK_CLIENT_ID")
-    KEYCLOAK_CLIENT_SECRET: str = Field(..., alias="KEYCLOAK_CLIENT_SECRET")
+    KEYCLOAK_URL: str = Field(default="", alias="KEYCLOAK_URL")
+    KEYCLOAK_REALM: str = Field(default="", alias="KEYCLOAK_REALM")
+    KEYCLOAK_CLIENT_ID: str = Field(default="", alias="KEYCLOAK_CLIENT_ID")
+    KEYCLOAK_CLIENT_SECRET: str = Field(default="", alias="KEYCLOAK_CLIENT_SECRET")
 
     # ── AI APIs — MiMo v2.5 for everything (vision + text) ────────────────────
     MIMO_API_KEY: str = Field(default="", alias="MIMO_API_KEY")

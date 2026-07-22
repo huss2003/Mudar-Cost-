@@ -338,6 +338,12 @@ export const useProjectStore = create<ProjectState>()(
       },
 
       disconnectSSE: () => {
+        // Nuke the onerror handler first so closing the EventSource doesn't
+        // re-trigger the reconnect loop (common in jsdom environments where
+        // close() fires error events synchronously).
+        if (eventSource) {
+          eventSource.onerror = null;
+        }
         // Full teardown — also resets the backoff counter because this is
         // an explicit user- or lifecycle-driven disconnect (e.g. project
         // switch, unmount).

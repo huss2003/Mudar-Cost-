@@ -1,20 +1,17 @@
 /**
  * PDF → PNG conversion using pdfjs-dist.
- * Falls back gracefully if CDN worker is blocked.
+ * Runs on main thread (no web worker) to avoid CDN/CORS issues.
  */
 let pdfjsLib: typeof import('pdfjs-dist') | null = null;
 
 async function getPdfLib() {
   if (!pdfjsLib) {
     pdfjsLib = await import('pdfjs-dist');
-    // Try to set worker — if CDN is blocked, disable it (slower but works)
-    try {
-      pdfjsLib.GlobalWorkerOptions.workerSrc =
-        `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-    } catch {
-      // CDN blocked — use main thread (slower but functional)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-    }
+    // Use locally bundled worker (copied to public/) to avoid CDN/CORS issues
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+      '/pdf.worker.min.mjs',
+      import.meta.url
+    ).href;
   }
   return pdfjsLib;
 }

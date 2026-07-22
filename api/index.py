@@ -1,4 +1,4 @@
-"""Vercel Python serverless handler for Auto Cost Engine."""
+"""Vercel Python serverless handler for Auto Cost Engine API."""
 import sys, os, logging
 
 # Add backend to path
@@ -13,20 +13,53 @@ os.environ.setdefault("MINIO_ENDPOINT", "")
 os.environ.setdefault("MINIO_ACCESS_KEY", "")
 os.environ.setdefault("MINIO_SECRET_KEY", "")
 
-from mangum import Mangum
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 
-try:
-    from app.main import app
-    handler = Mangum(app, lifespan="off")
-except Exception as e:
-    # Fallback: minimal app if imports fail
-    logging.error(f"Failed to import full app: {e}")
-    from fastapi import FastAPI
-    app = FastAPI(title="Auto Cost Engine")
+# Create a minimal API that routes to Supabase Edge Functions
+app = FastAPI(title="Auto Cost Engine API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/api/healthz")
+async def healthz():
+    return {"status": "alive", "version": "1.0.0"}
+
+@app.get("/api/v1/{path:path}")
+async def proxy_api(path: str, request: Request):
+    """Proxy API requests to Supabase Edge Functions"""
+    import httpx
     
-    @app.get("/api/healthz")
-    async def healthz():
-        return {"status": "alive", "mode": "fallback"}
+    supabase_url = os.environ.get("SUPABASE_URL", "https://pecnshwflkwpnwiskgmg.supabase.co")
+    supabase_key = os.environ.get("SUPABASE_ANON_KEY", "sb_publishable_GMkHBBICoUbKeg5W1UGtFg_Y-_xU0yb")
     
-    from mangum import Mangum
-    handler = Mangum(app, lifespan="off")
+    target_url = f"{supabase_url}/functions/v1/api/{path}"
+    method = request.method
+    body = await request.body() if method in ("POST", "PUT", "PATCH") else None
+    
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.request(
+            method, target_url,
+            headers={
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "application/json",
+            },
+            content=body,
+        )
+    
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=resp.status_code,
+        content=resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {"data": resp.text},
+    )
+
+# Mangum adapter for Vercel
+from mangum import Mangum
+handler = Mangum(app, lifespan="off")

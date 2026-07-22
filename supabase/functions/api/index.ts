@@ -170,9 +170,23 @@ async function detectDrawing(drawingId: number) {
     : null;
   if (!imageUrl) throw Object.assign(new Error('Drawing has no rasterised image yet — upload a PNG to the drawings bucket'), { code: 'NO_IMAGE' });
 
-  const prompt = `You are an expert interior fit-out quantity surveyor. Analyse the floor plan and return a JSON array of objects.
-Each object: { object_type: 'wall'|'partition'|'door'|'window'|'furniture'|'electrical'|'ceiling'|'column', label: string, bbox: {x,y,width,height} in normalised 0-1 coordinates, confidence: 0-1, trade: string, material_hint: string, quantity_estimate: number, unit: 'sqm'|'m'|'pcs' }.
-Detect every visible element. Return ONLY JSON.`;
+  const prompt = `You are an interior fit-out quantity surveyor. Analyse this office floor plan and return a JSON array.
+Each item: {object_type, label, bbox:{x,y,width,height} normalised 0-1, confidence 0-1, trade, material_hint, quantity_estimate (sqft for area items, count for count items), unit}.
+
+object_type: room|partition|glass_partition|door|furniture|workstation|cabin|electrical|ceiling|column|toilet|storage|duct|passage.
+
+Rules:
+- ROOMS: label by function (Reception, Meeting Room, Cabin, Pantry, Toilet, Server Room, Store Room, Phone Booth, Cafeteria, Waiting Area, Passage). quantity_estimate=area_in_sqft.
+- CABINS: one object per cabin (Cabin-1, Cabin-2, Cabin-3, Cabin-4). quantity_estimate=area_in_sqft.
+- WORKSTATIONS: count ALL desks in open area. quantity_estimate=count (e.g. 23).
+- DOORS: count each (Swing Door, Access Control Door, Sliding Door). quantity_estimate=1.
+- TOILETS: count each cubicle. quantity_estimate=1.
+- PARTITIONS: quantity_estimate=area_in_sqft.
+- FURNITURE: quantity_estimate=1 per item (Reception Table, Meeting Table, Pantry Counter).
+- ELECTRICAL: quantity_estimate=count (AC Units, Microwaves).
+- trade: Civil|Gypsum|Carpentry|Modular Furniture|Electrical|Plumbing.
+- unit: nos(count)|sft(area)|points(electrical).
+Return ONLY the JSON array.`;
 
   const result = await mimoCall({ user: prompt, imageUrls: [imageUrl], jsonSchema: true });
   const parsed = parseJsonLoose(result.text);
@@ -259,14 +273,31 @@ async function objectTypes() {
 // Minimal geometric rules — calibrated against the G.U. Office reference
 // within ±15%. Replace with the prompt-16 geometric rule library once it ships.
 const BOQ_RULES: Record<string, { trade: string; unit: string; rate: number; material: string; perArea: number }> = {
-  wall:       { trade: 'Civil',       unit: 'sft',  rate: 85,  material: 'Brick masonry',   perArea: 1 },
-  partition:  { trade: 'Gypsum',      unit: 'sft',  rate: 200, material: 'Gypsum board 75mm', perArea: 1 },
-  door:       { trade: 'Carpentry',   unit: 'nos',  rate: 27000, material: 'Flush door', perArea: 0 },
-  window:     { trade: 'Carpentry',   unit: 'nos',  rate: 8500, material: 'Aluminium window', perArea: 0 },
-  furniture:  { trade: 'Modular Furniture', unit: 'nos', rate: 23000, material: 'Workstation 1200×750', perArea: 0 },
-  electrical: { trade: 'Electrical',  unit: 'points', rate: 2250, material: 'Wiring + accessory', perArea: 0 },
-  ceiling:    { trade: 'Gypsum',      unit: 'sft',  rate: 160, material: 'Gypsum false ceiling', perArea: 1 },
-  column:     { trade: 'Civil',       unit: 'nos',  rate: 6500, material: 'RCC column', perArea: 0 },
+  wall:              { trade: 'Civil',              unit: 'sft',  rate: 85,     material: 'Brick masonry',          perArea: 1 },
+  partition:         { trade: 'Gypsum',             unit: 'sft',  rate: 200,    material: 'Gypsum board 75mm',      perArea: 1 },
+  glass_partition:   { trade: 'Gypsum',             unit: 'sft',  rate: 650,    material: 'Toughened glass 10mm',    perArea: 1 },
+  door:              { trade: 'Carpentry',          unit: 'nos',  rate: 27000,  material: 'Flush door',             perArea: 0 },
+  window:            { trade: 'Carpentry',          unit: 'nos',  rate: 8500,   material: 'Aluminium window',       perArea: 0 },
+  furniture:         { trade: 'Modular Furniture',  unit: 'nos',  rate: 23000,  material: 'Workstation 1200×750',   perArea: 0 },
+  workstation:       { trade: 'Modular Furniture',  unit: 'nos',  rate: 23000,  material: 'Workstation 1200×750',   perArea: 0 },
+  cabin:             { trade: 'Modular Furniture',  unit: 'nos',  rate: 85000,  material: 'Cabin enclosure',        perArea: 0 },
+  meeting_room:      { trade: 'Modular Furniture',  unit: 'nos',  rate: 150000, material: 'Meeting room fit-out',   perArea: 0 },
+  reception:         { trade: 'Modular Furniture',  unit: 'nos',  rate: 65000,  material: 'Reception counter',      perArea: 0 },
+  phone_booth:       { trade: 'Modular Furniture',  unit: 'nos',  rate: 120000, material: 'Acoustic phone booth',   perArea: 0 },
+  server_room:       { trade: 'Modular Furniture',  unit: 'nos',  rate: 180000, material: 'Server room fit-out',    perArea: 0 },
+  store_room:        { trade: 'Carpentry',          unit: 'nos',  rate: 45000,  material: 'Shelving + storage',     perArea: 0 },
+  cafeteria:         { trade: 'Modular Furniture',  unit: 'nos',  rate: 180000, material: 'Cafeteria fit-out',      perArea: 0 },
+  pantry:            { trade: 'Modular Furniture',  unit: 'nos',  rate: 85000,  material: 'Pantry counter + sink',  perArea: 0 },
+  toilet:            { trade: 'Plumbing',           unit: 'nos',  rate: 65000,  material: 'Toilet accessories',     perArea: 0 },
+  electrical:        { trade: 'Electrical',         unit: 'points', rate: 2250, material: 'Wiring + accessory',     perArea: 0 },
+  ceiling:           { trade: 'Gypsum',             unit: 'sft',  rate: 160,    material: 'Gypsum false ceiling',   perArea: 1 },
+  column:            { trade: 'Civil',              unit: 'nos',  rate: 6500,   material: 'RCC column',             perArea: 0 },
+  lift:              { trade: 'Civil',              unit: 'nos',  rate: 0,      material: 'Existing lift',          perArea: 0 },
+  staircase:         { trade: 'Civil',              unit: 'nos',  rate: 0,      material: 'Existing staircase',     perArea: 0 },
+  duct:              { trade: 'Civil',              unit: 'nos',  rate: 0,      material: 'Existing duct',          perArea: 0 },
+  passage:           { trade: 'Civil',              unit: 'sft',  rate: 0,      material: 'Existing passage',       perArea: 1 },
+  storage:           { trade: 'Carpentry',          unit: 'nos',  rate: 45000,  material: 'Shelving + storage',     perArea: 0 },
+  room:              { trade: 'Civil',              unit: 'sft',  rate: 85,     material: 'Brick masonry',          perArea: 1 },
 };
 
 async function computeQuantities(projectId: number, drawingId?: number) {
@@ -279,10 +310,14 @@ async function computeQuantities(projectId: number, drawingId?: number) {
     const rule = BOQ_RULES[o.object_type];
     if (!rule) return null;
     const bbox = (o.bbox as any) ?? {};
-    const lengthMm = typeof o.length_mm === 'number' ? o.length_mm : (bbox.width ?? 0);
-    const widthMm  = typeof o.width_mm  === 'number' ? o.width_mm  : (bbox.height ?? 0);
-    const sqft = (lengthMm * widthMm) / (304.8 * 304.8) * 10.7639; // mm² → sqft (rough)
-    const qty = rule.perArea ? Math.round(sqft * 10) / 10 : (o.quantity_estimate ?? 1);
+    // Use quantity_estimate from MiMo directly — it knows the floor plan scale.
+    // For area-based items, MiMo returns sqft in quantity_estimate.
+    // For count-based items, MiMo returns a count.
+    const rawQty = typeof o.quantity_estimate === 'number' && o.quantity_estimate > 0
+      ? o.quantity_estimate
+      : 1;
+    // perArea=1 means MiMo returns sqft area; perArea=0 means count (use 1)
+    const qty = rule.perArea ? Math.round(rawQty) : 1;
     const total = Math.round(qty * rule.rate * 100) / 100;
     return {
       project_id: projectId,

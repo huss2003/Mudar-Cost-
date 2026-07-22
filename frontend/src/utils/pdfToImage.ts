@@ -1,6 +1,6 @@
 /**
  * PDF → PNG conversion using pdfjs-dist.
- * Runs on main thread (no web worker) to avoid CDN/CORS issues.
+ * Uses a locally bundled worker to avoid CDN/CORS issues.
  */
 let pdfjsLib: typeof import('pdfjs-dist') | null = null;
 
@@ -18,11 +18,13 @@ async function getPdfLib() {
 
 /**
  * Convert a PDF File into an array of PNG File objects (one per page).
- * Each page is rendered at 2× scale for crisp output.
+ * Uses 1.5× scale for speed + quality balance.
+ * Reports progress via onProgress callback.
  */
 export async function convertPdfToImages(
   file: File,
-  scale = 2
+  scale = 1.5,
+  onProgress?: (page: number, total: number) => void
 ): Promise<File[]> {
   const lib = await getPdfLib();
   const arrayBuffer = await file.arrayBuffer();
@@ -31,6 +33,7 @@ export async function convertPdfToImages(
   const pages: File[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
+    onProgress?.(i, pdf.numPages);
     const page = await pdf.getPage(i);
     const viewport = page.getViewport({ scale });
 
@@ -60,7 +63,7 @@ function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
         else reject(new Error('Canvas toBlob returned null'));
       },
       'image/png',
-      1
+      0.92  // quality < 1 for faster encoding
     );
   });
 }

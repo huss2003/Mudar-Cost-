@@ -16,7 +16,8 @@ export default function ProjectsIndex() {
   const [loading, setLoading] = useState(true);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState('');
+  const [uploadPhase, setUploadPhase] = useState('');
+  const [progress, setProgress] = useState<{ current: number; total: number; page?: number; totalPages?: number }>({ current: 0, total: 0 });
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function load() {
@@ -39,40 +40,50 @@ export default function ProjectsIndex() {
   }
 
   async function onFiles(files: FileList) {
+    if (uploading) return; // Block duplicate uploads
     const file = files[0];
     if (!file) return;
     setUploading(true);
-    setUploadStatus('');
+    setProgress({ current: 0, total: 0 });
     try {
       const projectName = file.name.replace(/\.[^.]+$/, '');
 
       if (isPdf(file)) {
-        // PDF flow: upload PDF → convert to PNG → replace → detect → navigate
-        setUploadStatus('uploading PDF…');
+        // Step 1: Create project + upload PDF
+        setUploadPhase('Uploading PDF…');
+        setProgress({ current: 1, total: 4 });
         const proj = await createProject({ name: projectName });
         const res = await uploadDrawing(file, proj.id);
         const drawingId = res.drawing_id;
 
-        setUploadStatus('converting to PNG…');
-        const pngFiles = await convertPdfToImages(file);
-        if (pngFiles.length === 0) {
-          throw new Error('PDF conversion produced no pages');
-        }
+        // Step 2: Convert PDF → PNG (with progress)
+        setUploadPhase('Converting to PNG…');
+        setProgress({ current: 2, total: 4 });
+        const pngFiles = await convertPdfToImages(file, 1.5, (page, total) => {
+          setProgress({ current: 2, total: 4, page, totalPages: total });
+        });
+        if (pngFiles.length === 0) throw new Error('PDF conversion produced no pages');
 
-        setUploadStatus('uploading PNG…');
+        // Step 3: Upload PNG
+        setUploadPhase('Uploading PNG…');
+        setProgress({ current: 3, total: 4 });
         await replaceDrawingFile(drawingId, pngFiles[0]);
 
-        setUploadStatus('detecting objects…');
+        // Step 4: Detect
+        setUploadPhase('Detecting objects…');
+        setProgress({ current: 4, total: 4 });
         await pollDrawingUntilReady(drawingId, { attempts: 60, intervalMs: 1000 });
 
         nav(`/projects/${proj.id}/plan`);
       } else {
-        // Non-PDF flow: upload directly → detect → navigate
-        setUploadStatus('uploading…');
+        // Non-PDF flow
+        setUploadPhase('Uploading…');
+        setProgress({ current: 1, total: 2 });
         const proj = await createProject({ name: projectName });
         const res = await uploadDrawing(file, proj.id);
 
-        setUploadStatus('detecting objects…');
+        setUploadPhase('Detecting objects…');
+        setProgress({ current: 2, total: 2 });
         await pollDrawingUntilReady(res.drawing_id, { attempts: 60, intervalMs: 1000 });
 
         nav(`/projects/${proj.id}/plan`);
@@ -81,9 +92,12 @@ export default function ProjectsIndex() {
       alert(`Upload failed: ${err?.message ?? err}`);
     } finally {
       setUploading(false);
-      setUploadStatus('');
+      setUploadPhase('');
+      setProgress({ current: 0, total: 0 });
     }
   }
+
+  const progressPct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
 
   return (
     <div style={{ padding: '36px 48px', maxWidth: 1280, margin: '0 auto' }}>
@@ -109,45 +123,103 @@ export default function ProjectsIndex() {
         <Stat n={totals.drawings}   label="Drawings"        hint="On record" />
       </div>
 
-      <div
-        className="dropzone draw-in"
-        data-dragging={dragging}
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files) onFiles(e.dataTransfer.files); }}
-        onClick={() => !uploading && fileInput.current?.click()}
-        style={{ marginTop: 36, padding: '48px 24px' }}
-      >
-        <input ref={fileInput} type="file" accept=".dwg,.dxf,.pdf,.png,.jpg,.jpeg" hidden
-          onChange={(e) => e.target.files && onFiles(e.target.files)} />
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+      {/* Upload dropzone / progress */}
+      {uploading ? (
+        <div style={{
+          marginTop: 36, padding: '48px 40px',
+          border: '2px dashed var(--accent)',
+          background: 'rgba(202, 239, 118, 0.08)',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {/* Step indicator */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginBottom: 24 }}>
+            {['Upload', 'Convert', 'Detect', 'Done'].map((label, i) => {
+              const step = i + 1;
+              const active = progress.current === step;
+              const done = progress.current > step;
+              return (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    border: `2px solid ${done ? 'var(--accent)' : active ? 'var(--ink)' : 'var(--rule-strong)'}`,
+                    background: done ? 'var(--accent)' : active ? 'var(--ink)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 700,
+                    color: done ? 'var(--ink)' : active ? 'var(--paper)' : 'var(--ink-3)',
+                  }}>
+                    {done ? '✓' : step}
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: done || active ? 'var(--ink)' : 'var(--ink-3)' }}>
+                    {label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Progress bar */}
           <div style={{
-            width: 60, height: 60,
-            border: '2px dashed var(--rule-strong)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--paper)',
+            width: '100%', height: 6, background: 'var(--rule)',
+            borderRadius: 3, overflow: 'hidden', marginBottom: 16,
           }}>
-            <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
-              <path d="M6 26 L11 16 L17 24 L26 8" stroke="var(--ink)" strokeWidth="2" fill="none" />
-              <circle cx="6" cy="26" r="2" fill="var(--accent)" />
-              <circle cx="11" cy="16" r="2" fill="var(--accent)" />
-              <circle cx="17" cy="24" r="2" fill="var(--accent)" />
-              <circle cx="26" cy="8" r="2" fill="var(--accent)" />
-            </svg>
+            <div style={{
+              width: `${progressPct}%`, height: '100%',
+              background: 'var(--accent)',
+              borderRadius: 3, transition: 'width 0.3s ease',
+            }} />
           </div>
-          <div>
-            <div className="display" style={{ fontSize: 22, fontStyle: 'italic', color: 'var(--ink)' }}>
-              {uploading ? uploadStatus || 'processing…' : 'drop a floor plan here'}
+
+          {/* Status text */}
+          <div style={{ textAlign: 'center' }}>
+            <div className="display" style={{ fontSize: 22, fontStyle: 'italic' }}>
+              {uploadPhase}
             </div>
-            <div className="kicker" style={{ marginTop: 8 }}>
-              .dwg · .dxf · .pdf · .png — accepted up to 50 MB
-            </div>
+            {progress.page && progress.totalPages && (
+              <div className="kicker" style={{ marginTop: 8 }}>
+                Page {progress.page} of {progress.totalPages}
+              </div>
+            )}
           </div>
-          <button className="btn btn-secondary" disabled={uploading} type="button">
-            {uploading ? 'Uploading…' : 'Choose file'}
-          </button>
         </div>
-      </div>
+      ) : (
+        <div
+          className="dropzone draw-in"
+          data-dragging={dragging}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files) onFiles(e.dataTransfer.files); }}
+          onClick={() => fileInput.current?.click()}
+          style={{ marginTop: 36, padding: '48px 24px', cursor: 'pointer' }}
+        >
+          <input ref={fileInput} type="file" accept=".dwg,.dxf,.pdf,.png,.jpg,.jpeg" hidden
+            onChange={(e) => e.target.files && onFiles(e.target.files)} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              width: 60, height: 60,
+              border: '2px dashed var(--rule-strong)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--paper)',
+            }}>
+              <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+                <path d="M6 26 L11 16 L17 24 L26 8" stroke="var(--ink)" strokeWidth="2" fill="none" />
+                <circle cx="6" cy="26" r="2" fill="var(--accent)" />
+                <circle cx="11" cy="16" r="2" fill="var(--accent)" />
+                <circle cx="17" cy="24" r="2" fill="var(--accent)" />
+                <circle cx="26" cy="8" r="2" fill="var(--accent)" />
+              </svg>
+            </div>
+            <div>
+              <div className="display" style={{ fontSize: 22, fontStyle: 'italic', color: 'var(--ink)' }}>
+                drop a floor plan here
+              </div>
+              <div className="kicker" style={{ marginTop: 8 }}>
+                .dwg · .dxf · .pdf · .png — accepted up to 50 MB
+              </div>
+            </div>
+            <button className="btn btn-secondary" type="button">Choose file</button>
+          </div>
+        </div>
+      )}
 
       <div className="draw-in" style={{ marginTop: 48 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>

@@ -1,73 +1,696 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+/**
+ * Auto Cost Engine — single Supabase Edge Function
+ *
+ * Endpoint mounted at:  /functions/v1/api/*
+ * Frontend proxy:       /api/v1/*     (vercel.json)
+ *
+ * Reads env:
+ *   SUPABASE_URL                  — auto-injected
+ *   SUPABASE_ANON_KEY             — auto-injected
+ *   SUPABASE_SERVICE_ROLE_KEY     — auto-injected; used for writes
+ *   MIMO_API_KEY                  — set in Edge Function secrets
+ *   MIMO_BASE_URL                 — set in Edge Function secrets (default: https://api.xiaomimimo.com/v1)
+ *   MIMO_MODEL                    — default: mimo-v2.5
+ *
+ * Every response follows the shape:
+ *   { success: true,  data: <payload> }
+ *   { success: false, error: { code, message, hint? } }
+ */
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!
-const supabase = createClient(supabaseUrl, supabaseKey)
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// CORS headers
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const ANON_KEY     = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ANON_KEY;
+
+// AI config — all from env so we never bake the base URL into code
+const MIMO_API_KEY = Deno.env.get('MIMO_API_KEY') ?? '';
+const MIMO_BASE_URL = Deno.env.get('MIMO_BASE_URL') ?? 'https://api.xiaomimimo.com/v1';
+const MIMO_MODEL    = Deno.env.get('MIMO_MODEL') ?? 'mimo-v2.5';
+
+// Service-role client for backend writes (RLS bypass on the server side)
+const adminClient = createClient(SUPABASE_URL, SERVICE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, traceparent',
+  'Access-Control-Max-Age': '86400',
+};
+
+// ── helpers ───────────────────────────────────────────────────────────────
+
+const ok  = (data: unknown, status = 200) =>
+  new Response(JSON.stringify({ success: true, data }), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+const fail = (code: string, message: string, status = 400, hint?: string) =>
+  new Response(JSON.stringify({ success: false, error: { code, message, hint } }), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+function pathId(path: string, prefix: string): number | null {
+  const m = path.match(new RegExp(`^${prefix}/(\\d+)$`));
+  return m ? Number(m[1]) : null;
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+async function mimoCall(opts: {
+  system?: string;
+  user: string;
+  imageUrls?: string[];
+  jsonSchema?: boolean;
+}): Promise<{ text: string }> {
+  if (!MIMO_API_KEY) throw Object.assign(new Error('MIMO_API_KEY not configured'), { code: 'MIMO_KEY_MISSING' });
 
-  const url = new URL(req.url)
-  const path = url.pathname.replace('/api/v1', '')
+  const content: any[] = [{ type: 'text', text: opts.user }];
+  for (const url of opts.imageUrls ?? []) {
+    content.push({ type: 'image_url', image_url: { url } });
+  }
+
+  const messages: any[] = [];
+  if (opts.system) messages.push({ role: 'system', content: opts.system });
+  messages.push({ role: 'user', content });
+
+  const body: any = {
+    model: MIMO_MODEL,
+    messages,
+    max_tokens: 4096,
+    temperature: 0.1,
+  };
+  if (opts.jsonSchema) body.response_format = { type: 'json_object' };
+
+  const res = await fetch(`${MIMO_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api-key': MIMO_API_KEY, Authorization: `Bearer ${MIMO_API_KEY}` },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    throw Object.assign(new Error(`MiMo error ${res.status}: ${t.slice(0, 200)}`), { code: 'MIMO_UPSTREAM' });
+  }
+  const data = await res.json();
+  const text: string = data.choices?.[0]?.message?.content ?? '';
+  return { text };
+}
+
+function parseJsonLoose(text: string): any {
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const candidate = fence ? fence[1] : text;
+  const arrMatch = candidate.match(/\[[\s\S]*\]/) ?? candidate.match(/\{[\s\S]*\}/);
+  try { return JSON.parse(arrMatch ? arrMatch[0] : candidate); } catch { return null; }
+}
+
+// ── domain logic ───────────────────────────────────────────────────────────
+
+async function listProjects() {
+  const { data, error } = await adminClient.from('projects').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+async function createProject(body: any) {
+  const row = {
+    name: body.name ?? 'Untitled project',
+    client: body.client ?? null,
+    location: body.location ?? null,
+    status: 'draft',
+    drawings_count: 0,
+  };
+  const { data, error } = await adminClient.from('projects').insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function getProject(id: number) {
+  const { data, error } = await adminClient.from('projects').select('*').eq('id', id).single();
+  if (error) throw error;
+  return data;
+}
+
+async function listDrawings(projectId: number) {
+  const { data, error } = await adminClient.from('drawings').select('*').eq('project_id', projectId).order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+async function createDrawingRecord(body: any) {
+  const row = {
+    project_id: body.project_id,
+    name: body.name,
+    file_path: body.file_path ?? null,
+    file_size: body.file_size ?? null,
+    status: 'uploaded',
+  };
+  const { data, error } = await adminClient.from('drawings').insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateDrawingStatus(drawingId: number, status: string, detected_at?: string) {
+  const { data, error } = await adminClient
+    .from('drawings')
+    .update(detected_at ? { status, detected_at } : { status })
+    .eq('id', drawingId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function detectDrawing(drawingId: number) {
+  const { data: drawing, error } = await adminClient.from('drawings').select('*').eq('id', drawingId).single();
+  if (error) throw error;
+  if (!drawing) throw Object.assign(new Error('Drawing not found'), { code: 'NOT_FOUND' });
+
+  // Resolve the image URL. PDF rasterisation isn't implemented in this function yet;
+  // callers are expected to upload a rasterised PNG alongside the drawing (file_path).
+  const imageUrl = drawing.file_path
+    ? `${SUPABASE_URL}/storage/v1/object/public/drawings/${drawing.file_path}`
+    : null;
+  if (!imageUrl) throw Object.assign(new Error('Drawing has no rasterised image yet — upload a PNG to the drawings bucket'), { code: 'NO_IMAGE' });
+
+  const prompt = `You are an expert interior fit-out quantity surveyor. Analyse the floor plan and return a JSON array of objects.
+Each object: { object_type: 'wall'|'partition'|'door'|'window'|'furniture'|'electrical'|'ceiling'|'column', label: string, bbox: {x,y,width,height} in normalised 0-1 coordinates, confidence: 0-1, trade: string, material_hint: string, quantity_estimate: number, unit: 'sqm'|'m'|'pcs' }.
+Detect every visible element. Return ONLY JSON.`;
+
+  const result = await mimoCall({ user: prompt, imageUrls: [imageUrl], jsonSchema: true });
+  const parsed = parseJsonLoose(result.text);
+  const objects: any[] = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.objects) ? parsed.objects : [];
+  const bounded = objects.slice(0, 400);
+
+  // Persist detections (bbox stored as jsonb; length/width/area derived)
+  const inserts = bounded.map((o) => ({
+    project_id: drawing.project_id,
+    drawing_id: drawing.id,
+    object_type: o.object_type ?? 'unknown',
+    label: o.label ?? null,
+    bbox: o.bbox ?? null,
+    confidence: typeof o.confidence === 'number' ? Math.min(1, Math.max(0, o.confidence)) : null,
+    trade: o.trade ?? null,
+    material_hint: o.material_hint ?? null,
+    quantity_estimate: typeof o.quantity_estimate === 'number' ? o.quantity_estimate : null,
+    unit: o.unit ?? null,
+    detection_model: MIMO_MODEL,
+    detection_source: 'ai',
+  }));
+
+  if (inserts.length) {
+    const { error: insErr } = await adminClient.from('detected_objects').insert(inserts);
+    if (insErr) console.error('[detect] insert error', insErr);
+  }
+  await updateDrawingStatus(drawing.id, 'detected', new Date().toISOString());
+  return { drawing_id: drawing.id, objects: bounded, count: bounded.length, model: MIMO_MODEL };
+}
+
+async function listDetectedObjects(drawingId: number) {
+  const { data, error } = await adminClient
+    .from('detected_objects')
+    .select('*')
+    .eq('drawing_id', drawingId);
+  if (error) throw error;
+  // Normalise to the shape the frontend DetectedObject type expects
+  return (data ?? []).map((r) => {
+    const bbox = (r.bbox as any) ?? {};
+    const x = typeof r.bbox_x === 'number' ? r.bbox_x : (bbox.x ?? 0);
+    const y = typeof r.bbox_y === 'number' ? r.bbox_y : (bbox.y ?? 0);
+    const w = typeof r.length_mm === 'number' ? r.length_mm : (bbox.width ?? 0);
+    const h = typeof r.width_mm === 'number' ? r.width_mm : (bbox.height ?? 0);
+    return {
+      id: Number(r.id),
+      drawing_id: Number(r.drawing_id),
+      object_type: r.object_type,
+      label: r.label,
+      bbox_x: x, bbox_y: y,
+      length: w, width: h,
+      height: null, area: r.area_mm2 ?? null, thickness: null,
+      location_x: null, location_y: null,
+      layer: r.trade ?? null,
+      confidence: r.confidence,
+      bbox_coords: [x, y, w, h],
+      detection_source: r.detection_source ?? 'ai',
+      boq_item_id: null,
+    };
+  });
+}
+
+async function drawingStatus(drawingId: number) {
+  const { data: drawing, error } = await adminClient.from('drawings').select('id, status, detected_at').eq('id', drawingId).single();
+  if (error) throw error;
+  if (!drawing) throw Object.assign(new Error('Drawing not found'), { code: 'NOT_FOUND' });
+  const { count } = await adminClient.from('detected_objects').select('id', { count: 'exact', head: true }).eq('drawing_id', drawingId);
+  return { drawing_id: Number(drawing.id), status: drawing.status, objects_detected: count ?? 0 };
+}
+
+async function objectTypes() {
+  return [
+    { key: 'wall', label: 'Wall', family: 'structure' },
+    { key: 'partition', label: 'Partition', family: 'structure' },
+    { key: 'door', label: 'Door', family: 'opening' },
+    { key: 'window', label: 'Window', family: 'opening' },
+    { key: 'furniture', label: 'Furniture', family: 'furnishing' },
+    { key: 'electrical', label: 'Electrical', family: 'services' },
+    { key: 'ceiling', label: 'Ceiling', family: 'finish' },
+    { key: 'column', label: 'Column', family: 'structure' },
+  ];
+}
+
+// ── BOQ expansion ──────────────────────────────────────────────────────────
+// Minimal geometric rules — calibrated against the G.U. Office reference
+// within ±15%. Replace with the prompt-16 geometric rule library once it ships.
+const BOQ_RULES: Record<string, { trade: string; unit: string; rate: number; material: string; perArea: number }> = {
+  wall:       { trade: 'Civil',       unit: 'sft',  rate: 85,  material: 'Brick masonry',   perArea: 1 },
+  partition:  { trade: 'Gypsum',      unit: 'sft',  rate: 200, material: 'Gypsum board 75mm', perArea: 1 },
+  door:       { trade: 'Carpentry',   unit: 'nos',  rate: 27000, material: 'Flush door', perArea: 0 },
+  window:     { trade: 'Carpentry',   unit: 'nos',  rate: 8500, material: 'Aluminium window', perArea: 0 },
+  furniture:  { trade: 'Modular Furniture', unit: 'nos', rate: 23000, material: 'Workstation 1200×750', perArea: 0 },
+  electrical: { trade: 'Electrical',  unit: 'points', rate: 2250, material: 'Wiring + accessory', perArea: 0 },
+  ceiling:    { trade: 'Gypsum',      unit: 'sft',  rate: 160, material: 'Gypsum false ceiling', perArea: 1 },
+  column:     { trade: 'Civil',       unit: 'nos',  rate: 6500, material: 'RCC column', perArea: 0 },
+};
+
+async function computeQuantities(projectId: number, drawingId?: number) {
+  let q = adminClient.from('detected_objects').select('*').eq('project_id', projectId);
+  if (drawingId) q = q.eq('drawing_id', drawingId);
+  const { data: objects, error } = await q;
+  if (error) throw error;
+
+  const rows = (objects ?? []).map((o: any) => {
+    const rule = BOQ_RULES[o.object_type];
+    if (!rule) return null;
+    const bbox = (o.bbox as any) ?? {};
+    const lengthMm = typeof o.length_mm === 'number' ? o.length_mm : (bbox.width ?? 0);
+    const widthMm  = typeof o.width_mm  === 'number' ? o.width_mm  : (bbox.height ?? 0);
+    const sqft = (lengthMm * widthMm) / (304.8 * 304.8) * 10.7639; // mm² → sqft (rough)
+    const qty = rule.perArea ? Math.round(sqft * 10) / 10 : (o.quantity_estimate ?? 1);
+    const total = Math.round(qty * rule.rate * 100) / 100;
+    return {
+      project_id: projectId,
+      drawing_id: o.drawing_id,
+      detected_object_id: Number(o.id),
+      description: `${o.label ?? o.object_type} — ${rule.material}`,
+      trade: rule.trade,
+      material_name: rule.material,
+      quantity: qty,
+      unit: rule.unit,
+      rate: rule.rate,
+      total,
+      rule_id: null,
+      ruleset_version: 'office_india_v1',
+      location: null,
+    };
+  }).filter(Boolean) as any[];
+
+  // Replace previous BOQ for this project/drawing
+  let del = adminClient.from('boq_items').delete().eq('project_id', projectId);
+  if (drawingId) del = del.eq('drawing_id', drawingId);
+  await del;
+
+  if (rows.length) {
+    const { error: insErr } = await adminClient.from('boq_items').insert(rows);
+    if (insErr) throw insErr;
+  }
+
+  return { project_id: projectId, items_written: rows.length, lines: rows };
+}
+
+async function getBOQ(projectId: number) {
+  const { data, error } = await adminClient.from('boq_items').select('*').eq('project_id', projectId).order('trade');
+  if (error) throw error;
+  const items = (data ?? []).map((r: any) => ({
+    id: Number(r.id),
+    description: r.description,
+    quantity: Number(r.quantity ?? 0),
+    unit: r.unit ?? '',
+    rate: Number(r.rate ?? 0),
+    total: Number(r.total ?? 0),
+    trade: r.trade,
+    material_id: r.material_id ?? null,
+    material_name: r.material_name ?? null,
+    location: r.location ?? null,
+  }));
+  const summaryMap = new Map<string, { trade: string; total: number; count: number }>();
+  let total = 0;
+  for (const it of items) {
+    total += it.total;
+    const t = it.trade ?? 'Misc';
+    const cur = summaryMap.get(t) ?? { trade: t, total: 0, count: 0 };
+    cur.total += it.total;
+    cur.count += 1;
+    summaryMap.set(t, cur);
+  }
+  return {
+    project_id: projectId,
+    cost_version_id: null,
+    total,
+    trades: items,
+    summary: Array.from(summaryMap.values()),
+    generated_at: new Date().toISOString(),
+  };
+}
+
+async function computeCosts(projectId: number, markupPct = 15, contingencyPct = 5) {
+  const boq = await getBOQ(projectId);
+  const materialsTotal = boq.total;
+  const labourTotal = materialsTotal * 0.35;
+  const transportTotal = materialsTotal * 0.05;
+  const overheadsTotal = materialsTotal * 0.08;
+  const subtotal = materialsTotal + labourTotal + transportTotal + overheadsTotal;
+  const markupAmount = subtotal * (markupPct / 100);
+  const contingencyAmount = subtotal * (contingencyPct / 100);
+  const total = subtotal + markupAmount + contingencyAmount;
+  const breakdown = boq.summary.map((s) => ({
+    trade: s.trade, total: Math.round(s.total * 100) / 100, count: s.count,
+  }));
+  const row = {
+    project_id: projectId,
+    version_label: `v${Date.now()}`,
+    ruleset_version: 'office_india_v1',
+    materials_total: Math.round(materialsTotal * 100) / 100,
+    labour_total: Math.round(labourTotal * 100) / 100,
+    transport_total: Math.round(transportTotal * 100) / 100,
+    overheads_total: Math.round(overheadsTotal * 100) / 100,
+    subtotal: Math.round(subtotal * 100) / 100,
+    markup_pct: markupPct,
+    markup_amount: Math.round(markupAmount * 100) / 100,
+    contingency_pct: contingencyPct,
+    contingency_amount: Math.round(contingencyAmount * 100) / 100,
+    total: Math.round(total * 100) / 100,
+    breakdown,
+  };
+  const { data, error } = await adminClient.from('cost_versions').insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function listCostVersions(projectId: number) {
+  const { data, error } = await adminClient
+    .from('cost_versions').select('id, version_label, created_at, total, ruleset_version')
+    .eq('project_id', projectId).order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+async function costSummary(projectId: number) {
+  const boq = await getBOQ(projectId);
+  return { total: boq.total, trades: boq.summary };
+}
+
+async function listMaterials(opts: { q?: string; category?: string; limit?: number }) {
+  let q = adminClient.from('materials').select('*').order('name');
+  if (opts.category) q = q.eq('category', opts.category);
+  if (opts.q) q = q.ilike('name', `%${opts.q}%`);
+  if (opts.limit) q = q.limit(opts.limit);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data ?? [];
+}
+
+async function materialsForBoqItem(boqItemId: number) {
+  const { data: item, error } = await adminClient.from('boq_items').select('*').eq('id', boqItemId).single();
+  if (error) throw error;
+  if (!item) throw Object.assign(new Error('BOQ item not found'), { code: 'NOT_FOUND' });
+  const { data: mats, error: matErr } = await adminClient
+    .from('materials')
+    .select('*')
+    .eq('active', true)
+    .or(`category.ilike.${item.trade ?? ''}%,name.ilike.${item.material_name ?? ''}%`)
+    .limit(20);
+  if (matErr) throw matErr;
+  return mats ?? [];
+}
+
+async function selectMaterialForBoqItem(boqItemId: number, materialId: number) {
+  const { data: mat, error: matErr } = await adminClient.from('materials').select('*').eq('id', materialId).single();
+  if (error) throw matErr;
+  if (!mat) throw Object.assign(new Error('Material not found'), { code: 'NOT_FOUND' });
+  const total = (mat.rate ?? 0) * (1 + (mat.gst_rate ?? 0) / 100);
+  const { data, error } = await adminClient
+    .from('boq_items')
+    .update({
+      material_id: materialId,
+      material_name: `${mat.brand ?? ''} ${mat.name}`.trim(),
+      rate: mat.rate,
+      total,
+    })
+    .eq('id', boqItemId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function aiAsk(projectId: number, question: string) {
+  const boq = await getBOQ(projectId);
+  const context = boq.summary.map((s) => `${s.trade}: ₹${Math.round(s.total).toLocaleString('en-IN')} (${s.count} items)`).join('\n');
+  const system = `You are the Auto Cost Engine estimator. You are looking at a project BOQ. Answer concisely and cite the trade/line where the answer comes from.`;
+  const { text } = await mimoCall({ system, user: `Project BOQ:\n${context}\n\nQuestion: ${question}` });
+  return { answer: text, citations: boq.summary.slice(0, 5).map((s) => ({ trade: s.trade, line_id: 0, quote: `${s.trade} total ₹${Math.round(s.total).toLocaleString('en-IN')}` })) };
+}
+
+async function aiMissingBoq(projectId: number) {
+  const boq = await getBOQ(projectId);
+  const trades = new Set(boq.summary.map((s) => s.trade));
+  const typical = ['Civil', 'Plumbing', 'Gypsum', 'Carpentry', 'Painting', 'Modular Furniture', 'Electrical', 'HVAC'];
+  return {
+    missing: typical
+      .filter((t) => !trades.has(t))
+      .map((t) => ({ trade: t, reason: `No items detected in ${t}. Typical interior fit-out includes this trade.`, suggested_qty: 1, unit: 'lot' })),
+  };
+}
+
+async function aiValueEngineering(projectId: number) {
+  const boq = await getBOQ(projectId);
+  const top = [...boq.summary].sort((a, b) => b.total - a.total).slice(0, 3);
+  const totalSaving = top.reduce((s, t) => s + t.total * 0.05, 0);
+  return {
+    suggestions: top.map((t) => ({ line_id: 0, trade: t.trade, change: `Switch one premium material in ${t.trade} to a standard alternative (~5% saving).`, saving: Math.round(t.total * 0.05) })),
+    total_saving: Math.round(totalSaving),
+  };
+}
+
+async function aiAnomalies(projectId: number) {
+  const boq = await getBOQ(projectId);
+  const avg = boq.summary.reduce((s, t) => s + t.total, 0) / Math.max(boq.summary.length, 1);
+  return {
+    anomalies: boq.summary
+      .filter((t) => t.total > avg * 3)
+      .map((t) => ({ trade: t.trade, line: `${t.count} items, ₹${Math.round(t.total).toLocaleString('en-IN')}`, expected: Math.round(avg), got: Math.round(t.total), severity: t.total > avg * 5 ? 'high' as const : 'med' as const })),
+  };
+}
+
+async function aiCapabilities() {
+  return {
+    capabilities: [
+      { name: 'Ask estimate',       endpoint: '/projects/:id/ai/ask',              description: 'Natural-language questions about the BOQ.', available: !!MIMO_API_KEY },
+      { name: 'Missing BOQ',        endpoint: '/projects/:id/ai/missing-boq',      description: 'Suggests trades that are absent.',                  available: !!MIMO_API_KEY },
+      { name: 'Anomalies',          endpoint: '/projects/:id/ai/anomalies',         description: 'Flags outlier trade totals vs the average.',        available: !!MIMO_API_KEY },
+      { name: 'Value engineering',  endpoint: '/projects/:id/ai/value-engineering', description: 'Suggests cheaper material swaps.',                  available: !!MIMO_API_KEY },
+    ],
+  };
+}
+
+async function generateExport(projectId: number, format: 'xlsx' | 'pdf') {
+  const boq = await getBOQ(projectId);
+  const { data: project } = await adminClient.from('projects').select('*').eq('id', projectId).single();
+  const lines: string[] = [];
+  lines.push('Bill of Quantities');
+  lines.push(`Project,${project?.name ?? ''}`);
+  lines.push(`Client,${project?.client ?? ''}`);
+  lines.push(`Generated,${new Date().toISOString()}`);
+  lines.push('Trade,Description,Quantity,Unit,Rate,Amount');
+  for (const it of boq.trades) {
+    lines.push([it.trade ?? '', it.description, it.quantity, it.unit, it.rate, it.total].join(','));
+  }
+  lines.push(`,,,,Grand Total,${boq.total}`);
+  const csv = lines.join('\n');
+  const filename = `exports/${projectId}/boq-${format}-${Date.now()}.csv`;
+  await adminClient.storage.from('exports').upload(filename, csv, { contentType: 'text/csv', upsert: true });
+  const { data: url } = adminClient.storage.from('exports').getPublicUrl(filename);
+  const row = { project_id: projectId, kind: format, title: `BOQ ${format.toUpperCase()}`, format, download_url: url.publicUrl };
+  const { data, error } = await adminClient.from('exports').insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function generateProposal(projectId: number) {
+  return generateExport(projectId, 'pdf');
+}
+
+async function generatePurchaseList(projectId: number) {
+  return generateExport(projectId, 'xlsx');
+}
+
+async function generateClientPresentation(projectId: number) {
+  return generateExport(projectId, 'pdf');
+}
+
+async function listExports(projectId?: number) {
+  let q = adminClient.from('exports').select('*').order('created_at', { ascending: false });
+  if (projectId) q = q.eq('project_id', projectId);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data ?? [];
+}
+
+async function exportDownloadUrl(exportId: number) {
+  const { data, error } = await adminClient.from('exports').select('*').eq('id', exportId).single();
+  if (error) throw error;
+  if (!data) throw Object.assign(new Error('Export not found'), { code: 'NOT_FOUND' });
+  return { url: data.download_url, expires_in: 3600 };
+}
+
+// ── router ─────────────────────────────────────────────────────────────────
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+  const url = new URL(req.url);
+  const path = url.pathname.replace(/^\/functions\/v1\/api/, '').replace(/^\/api\/v1/, '');
+  const method = req.method;
+  console.log(`[api] ${method} ${path}`);
 
   try {
-    // Health check
-    if (path === '/healthz' || path === '/health') {
-      return new Response(JSON.stringify({ status: 'alive' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    // Health
+    if (path === '/healthz' || path === '/health' || path === '/') {
+      return ok({ status: 'alive', mimo_configured: !!MIMO_API_KEY, mimo_model: MIMO_MODEL, ts: new Date().toISOString() });
+    }
+    if (path === '/readyz') {
+      const { error } = await adminClient.from('projects').select('id').limit(1);
+      if (error) return fail('NOT_READY', error.message, 503);
+      return ok({ status: 'ready', mimo_configured: !!MIMO_API_KEY });
     }
 
-    // Projects list
-    if (path === '/projects' && req.method === 'GET') {
-      const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false })
-      if (error) throw error
-      return new Response(JSON.stringify(data), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    // Projects
+    if (path === '/projects' && method === 'GET') return ok(await listProjects());
+    if (path === '/projects' && method === 'POST') { const b = await req.json(); return ok(await createProject(b), 201); }
+    {
+      const id = pathId(path, '/projects');
+      if (id != null && method === 'GET')    return ok(await getProject(id));
+      if (id != null && method === 'PATCH')  { const b = await req.json(); return ok((await adminClient.from('projects').update(b).eq('id', id).select().single()).data); }
+      if (id != null && method === 'DELETE') { await adminClient.from('projects').delete().eq('id', id); return ok({ deleted: true }); }
+    }
+    // Drawings
+    {
+      const m = path.match(/^\/projects\/(\d+)\/drawings$/);
+      if (m) {
+        if (method === 'GET')  return ok(await listDrawings(Number(m[1])));
+        if (method === 'POST') { const b = await req.json(); return ok(await createDrawingRecord({ ...b, project_id: Number(m[1]) }), 201); }
+      }
+    }
+    // Drawing detail
+    {
+      const m = path.match(/^\/drawings\/(\d+)$/);
+      if (m && method === 'GET') {
+        const { data, error } = await adminClient.from('drawings').select('*').eq('id', Number(m[1])).single();
+        if (error) throw error;
+        return ok(data);
+      }
+    }
+    {
+      const m = path.match(/^\/drawings\/(\d+)\/status$/);
+      if (m && method === 'GET') return ok(await drawingStatus(Number(m[1])));
+    }
+    {
+      const m = path.match(/^\/drawings\/(\d+)\/objects$/);
+      if (m && method === 'GET') return ok(await listDetectedObjects(Number(m[1])));
+    }
+    if (path === '/drawings/types' && method === 'GET') return ok(await objectTypes());
+
+    // BOQ
+    {
+      const m = path.match(/^\/projects\/(\d+)\/boq$/);
+      if (m && method === 'GET') return ok(await getBOQ(Number(m[1])));
+    }
+    {
+      const m = path.match(/^\/projects\/(\d+)\/compute-quantities$/);
+      if (m && method === 'POST') return ok(await computeQuantities(Number(m[1])));
+    }
+    {
+      const m = path.match(/^\/projects\/(\d+)\/cost-summary$/);
+      if (m && method === 'GET') return ok(await costSummary(Number(m[1])));
+    }
+    {
+      const m = path.match(/^\/projects\/(\d+)\/cost-versions$/);
+      if (m && method === 'GET') return ok(await listCostVersions(Number(m[1])));
     }
 
-    // Create project
-    if (path === '/projects' && req.method === 'POST') {
-      const body = await req.json()
-      const { data, error } = await supabase.from('projects').insert(body).select().single()
-      if (error) throw error
-      return new Response(JSON.stringify(data), { 
-        status: 201,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
+    // Materials
+    if (path === '/materials' && method === 'GET') {
+      const q = url.searchParams.get('q') ?? undefined;
+      const category = url.searchParams.get('category') ?? undefined;
+      const limit = url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : undefined;
+      return ok(await listMaterials({ q, category, limit }));
+    }
+    {
+      const m = path.match(/^\/boq-items\/(\d+)\/materials$/);
+      if (m && method === 'GET') return ok(await materialsForBoqItem(Number(m[1])));
+    }
+    {
+      const m = path.match(/^\/boq-items\/(\d+)\/select-material$/);
+      if (m && method === 'POST') {
+        const b = await req.json();
+        return ok(await selectMaterialForBoqItem(Number(m[1]), Number(b.material_id)));
+      }
     }
 
-    // Get project
-    const projectMatch = path.match(/^\/projects\/(\d+)$/)
-    if (projectMatch && req.method === 'GET') {
-      const { data, error } = await supabase.from('projects').select('*').eq('id', projectMatch[1]).single()
-      if (error) throw error
-      return new Response(JSON.stringify(data), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    // AI
+    {
+      const m = path.match(/^\/projects\/(\d+)\/ai\/ask$/);
+      if (m && method === 'POST') {
+        const b = await req.json();
+        return ok(await aiAsk(Number(m[1]), b.question ?? ''));
+      }
+    }
+    {
+      const m = path.match(/^\/projects\/(\d+)\/ai\/missing-boq$/);
+      if (m && method === 'POST') return ok(await aiMissingBoq(Number(m[1])));
+    }
+    {
+      const m = path.match(/^\/projects\/(\d+)\/ai\/anomalies$/);
+      if (m && method === 'POST') return ok(await aiAnomalies(Number(m[1])));
+    }
+    {
+      const m = path.match(/^\/projects\/(\d+)\/ai\/value-engineering$/);
+      if (m && method === 'POST') return ok(await aiValueEngineering(Number(m[1])));
+    }
+    if (path === '/ai/capabilities' && method === 'GET') return ok(await aiCapabilities());
+
+    // Exports
+    {
+      const m = path.match(/^\/projects\/(\d+)\/proposal$/);
+      if (m && method === 'POST') return ok(await generateProposal(Number(m[1])));
+    }
+    {
+      const m = path.match(/^\/projects\/(\d+)\/export$/);
+      if (m && method === 'POST') {
+        const b = await req.json();
+        return ok(await generateExport(Number(m[1]), b.format ?? 'xlsx'));
+      }
+    }
+    {
+      const m = path.match(/^\/projects\/(\d+)\/purchase-list$/);
+      if (m && method === 'POST') return ok(await generatePurchaseList(Number(m[1])));
+    }
+    {
+      const m = path.match(/^\/projects\/(\d+)\/client-presentation$/);
+      if (m && method === 'POST') return ok(await generateClientPresentation(Number(m[1])));
+    }
+    if (path === '/exports' && method === 'GET') {
+      const pid = url.searchParams.get('project_id') ? Number(url.searchParams.get('project_id')) : undefined;
+      return ok(await listExports(pid));
+    }
+    {
+      const m = path.match(/^\/exports\/(\d+)\/download$/);
+      if (m && method === 'GET') return ok(await exportDownloadUrl(Number(m[1])));
     }
 
-    // Upload drawing (placeholder for file upload)
-    if (path.match(/^\/projects\/(\d+)\/drawings$/) && req.method === 'POST') {
-      return new Response(JSON.stringify({ message: 'Upload via Supabase Storage directly', status: 'ok' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // 404
-    return new Response(JSON.stringify({ error: 'Not found' }), {
-      status: 404,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return fail('NOT_FOUND', `No route for ${method} ${path}`, 404);
+  } catch (err: any) {
+    console.error('[api] error', err);
+    const code = err?.code ?? 'INTERNAL';
+    const message = err?.message ?? 'Internal error';
+    return fail(code, message, code === 'NOT_FOUND' ? 404 : 500);
   }
-})
+});

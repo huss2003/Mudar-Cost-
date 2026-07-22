@@ -631,10 +631,12 @@ serve(async (req) => {
       // varchar(10) — truncate to 8 chars. Anything we don't name here is
       // either NULL or has a Postgres default.
       const safeFilename = String(name).slice(0, 8);
+      const safeFileType = (file.type || 'application/pdf').slice(0, 50);
       const insert = await adminClient.from('drawings').insert({
         project_id: pid,
         name,
         filename: safeFilename,
+        file_type: safeFileType,
         file_path: storagePath,
         status: 'uploaded',
       }).select().single();

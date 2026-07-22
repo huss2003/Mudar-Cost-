@@ -40,10 +40,10 @@ class Settings(BaseSettings):
         description="postgresql+asyncpg://user:pass@host:5432/db",
     )
 
-    # ── MinIO (S3-compatible) ────────────────────────────────────────────────
-    MINIO_ENDPOINT: str = Field(..., alias="MINIO_ENDPOINT")  # e.g. minio:9000
-    MINIO_ACCESS_KEY: str = Field(..., alias="MINIO_ACCESS_KEY")
-    MINIO_SECRET_KEY: str = Field(..., alias="MINIO_SECRET_KEY")
+    # ── MinIO (S3-compatible) — optional, disable with empty string ─────────
+    MINIO_ENDPOINT: str = Field(default="", alias="MINIO_ENDPOINT")
+    MINIO_ACCESS_KEY: str = Field(default="", alias="MINIO_ACCESS_KEY")
+    MINIO_SECRET_KEY: str = Field(default="", alias="MINIO_SECRET_KEY")
     MINIO_BUCKET: str = Field(default="drawings", alias="MINIO_BUCKET")
 
     # ── Redis / Celery ───────────────────────────────────────────────────────
@@ -73,7 +73,9 @@ class Settings(BaseSettings):
     )
 
     # ── CORS ─────────────────────────────────────────────────────────────────
-    CORS_ORIGINS: List[str] = Field(..., alias="CORS_ORIGINS")
+    CORS_ORIGINS: List[str] = Field(
+        default=["*"], alias="CORS_ORIGINS"
+    )
 
     # ── Upload ───────────────────────────────────────────────────────────────
     MAX_UPLOAD_MB: int = Field(default=50, alias="MAX_UPLOAD_MB")
@@ -93,8 +95,6 @@ class Settings(BaseSettings):
         if self.ENVIRONMENT == "production":
             if not self.MIMO_API_KEY:
                 raise ValueError("MIMO_API_KEY is required in production")
-            if not self.DEEPSEEK_API_KEY:
-                raise ValueError("DEEPSEEK_API_KEY is required in production")
 
         if self.SECRET_KEY and len(self.SECRET_KEY) < 32:
             raise ValueError("SECRET_KEY must be >= 32 characters")

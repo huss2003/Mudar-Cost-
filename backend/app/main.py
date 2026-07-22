@@ -116,10 +116,11 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan: startup / shutdown."""
     # --- startup ---
     logger.info("Starting %s …", settings.APP_NAME)
-    try:
-        await create_bucket_if_not_exists()
-    except Exception:
-        logger.warning("MinIO bucket setup failed — continuing")
+    if settings.MINIO_ENDPOINT:
+        try:
+            await create_bucket_if_not_exists()
+        except Exception:
+            logger.warning("MinIO bucket setup failed — continuing")
 
     # Clear any existing structlog context vars
     structlog.contextvars.clear_contextvars()

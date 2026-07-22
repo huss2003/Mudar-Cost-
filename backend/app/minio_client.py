@@ -21,6 +21,8 @@ def get_minio_client() -> Minio:
 
 
 async def create_bucket_if_not_exists() -> None:
+    if not settings.MINIO_ENDPOINT:
+        return
     """Ensure the configured MinIO bucket exists.
 
     Should be called during application startup.

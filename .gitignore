@@ -51,3 +51,9 @@ backend/tests/eval/.eval-output/
 # Playwright artifacts
 tests/out/
 tests/fixtures/
+tests/out/
+supabase/.temp/
+tests/live-check.mjs
+tests/quad-test.md
+tests/out_e2e_test/limbo/
+

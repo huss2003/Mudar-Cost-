@@ -30,7 +30,33 @@ function shouldRetry(error: AxiosError, config: RetryConfig): boolean {
 }
 
 client.interceptors.response.use(
-  (response: AxiosResponse) => response,
+  (response: AxiosResponse) => {
+    const body = response.data;
+    if (
+      body && typeof body === 'object' && !Array.isArray(body) &&
+      Object.prototype.hasOwnProperty.call(body, 'success') &&
+      (body as any).success === true &&
+      Object.prototype.hasOwnProperty.call(body, 'data')
+    ) {
+      response.data = (body as any).data;
+    } else if (
+      body && typeof body === 'object' && !Array.isArray(body) &&
+      Object.prototype.hasOwnProperty.call(body, 'success') &&
+      (body as any).success === false &&
+      Object.prototype.hasOwnProperty.call(body, 'error')
+    ) {
+      const env = (body as any).error ?? {};
+      return Promise.reject(
+        Object.assign(new Error(env.message ?? 'API error'), {
+          isAxiosError: true,
+          response,
+          code: env.code ?? 'UNKNOWN',
+          traceId: env.trace_id,
+        }),
+      );
+    }
+    return response;
+  },
   async (error: AxiosError) => {
     const cfg = error.config as RetryConfig | undefined;
     if (!cfg) return Promise.reject(error);

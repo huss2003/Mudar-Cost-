@@ -547,7 +547,7 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
   const url = new URL(req.url);
-  const path = url.pathname.replace(/^\/functions\/v1\/api/, '').replace(/^\/api\/v1/, '');
+  const path = url.pathname.replace(/^\/functions\/v1\/api/, '').replace(/^\/api\/v1/, '').replace(/^\/api/, '');
   const method = req.method;
   console.log(`[api] ${method} ${path}`);
 
@@ -578,6 +578,13 @@ serve(async (req) => {
         if (method === 'GET')  return ok(await listDrawings(Number(m[1])));
         if (method === 'POST') { const b = await req.json(); return ok(await createDrawingRecord({ ...b, project_id: Number(m[1]) }), 201); }
       }
+    }
+    // Bare /drawings — accepts ?project_id=N, defaults to 1. Used by
+    // PlanView's sidebar list, refresh button, and any global /drawings call.
+    if (path === '/drawings' && method === 'GET') {
+      const raw = url.searchParams.get('project_id');
+      const pid = raw && Number.isFinite(Number(raw)) && Number(raw) > 0 ? Number(raw) : 1;
+      return ok(await listDrawings(pid));
     }
     // Drawing detail
     {

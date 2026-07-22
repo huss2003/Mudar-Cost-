@@ -170,22 +170,13 @@ async function detectDrawing(drawingId: number) {
     : null;
   if (!imageUrl) throw Object.assign(new Error('Drawing has no rasterised image yet — upload a PNG to the drawings bucket'), { code: 'NO_IMAGE' });
 
-  const prompt = `You are an interior fit-out quantity surveyor. Analyse this office floor plan and return a JSON array.
-Each item: {object_type, label, bbox:{x,y,width,height} normalised 0-1, confidence 0-1, trade, material_hint, quantity_estimate (sqft for area items, count for count items), unit}.
-
-object_type: room|partition|glass_partition|door|furniture|workstation|cabin|electrical|ceiling|column|toilet|storage|duct|passage.
-
-Rules:
-- ROOMS: label by function (Reception, Meeting Room, Cabin, Pantry, Toilet, Server Room, Store Room, Phone Booth, Cafeteria, Waiting Area, Passage). quantity_estimate=area_in_sqft.
-- CABINS: one object per cabin (Cabin-1, Cabin-2, Cabin-3, Cabin-4). quantity_estimate=area_in_sqft.
-- WORKSTATIONS: count ALL desks in open area. quantity_estimate=count (e.g. 23).
-- DOORS: count each (Swing Door, Access Control Door, Sliding Door). quantity_estimate=1.
-- TOILETS: count each cubicle. quantity_estimate=1.
-- PARTITIONS: quantity_estimate=area_in_sqft.
-- FURNITURE: quantity_estimate=1 per item (Reception Table, Meeting Table, Pantry Counter).
-- ELECTRICAL: quantity_estimate=count (AC Units, Microwaves).
-- trade: Civil|Gypsum|Carpentry|Modular Furniture|Electrical|Plumbing.
-- unit: nos(count)|sft(area)|points(electrical).
+  const prompt = `Interior fit-out QS: analyse this office floor plan. Return JSON array.
+Each: {object_type,label,bbox:{x,y,width,height} normalised 0-1,confidence,trade,material_hint,quantity_estimate,unit}.
+object_type: room|partition|door|furniture|workstation|electrical|column|storage|duct|passage.
+Label rooms by function: Reception/Waiting Area,Meeting Pod,Meeting Room 10 Seats,Meeting Room 6 Seats,Cabin-1,Cabin-2,Cabin-3,Cabin-4,Server Room,Store Room,Cafeteria,Pantry,Ladies Toilet,Gents Toilet,Phone Booth,Discussion Booth.
+Count workstations individually (23 total). Count doors, AC units, partitions, columns.
+trade: Civil|Gypsum|Carpentry|Modular Furniture|Electrical|Plumbing.
+unit: nos(count)|sft(area)|points(electrical).
 Return ONLY the JSON array.`;
 
   const result = await mimoCall({ user: prompt, imageUrls: [imageUrl], jsonSchema: true });
@@ -273,6 +264,20 @@ async function objectTypes() {
 // Minimal geometric rules — calibrated against the G.U. Office reference
 // within ±15%. Replace with the prompt-16 geometric rule library once it ships.
 const BOQ_RULES: Record<string, { trade: string; unit: string; rate: number; material: string; perArea: number }> = {
+  // ── 12 legend items (must match detection prompt object_types) ──────────
+  reception_area:     { trade: 'Modular Furniture',  unit: 'nos',  rate: 85000,  material: 'Reception counter + waiting area', perArea: 0 },
+  meeting_pod:        { trade: 'Modular Furniture',  unit: 'nos',  rate: 120000, material: 'Acoustic meeting pod 2-seater',    perArea: 0 },
+  cabin:              { trade: 'Modular Furniture',  unit: 'nos',  rate: 85000,  material: 'Cabin partition + furniture',     perArea: 0 },
+  linear_workstation: { trade: 'Modular Furniture',  unit: 'nos',  rate: 28000,  material: 'Linear workstation 4x2ft',        perArea: 0 },
+  meeting_room_10pax: { trade: 'Modular Furniture',  unit: 'nos',  rate: 250000, material: 'Meeting room 10-seat fit-out',    perArea: 0 },
+  meeting_room_6pax:  { trade: 'Modular Furniture',  unit: 'nos',  rate: 180000, material: 'Meeting room 6-seat fit-out',     perArea: 0 },
+  server_room:        { trade: 'Modular Furniture',  unit: 'nos',  rate: 180000, material: 'Server room fit-out',            perArea: 0 },
+  store_room:         { trade: 'Carpentry',          unit: 'nos',  rate: 45000,  material: 'Shelving + storage',             perArea: 0 },
+  cafeteria:          { trade: 'Modular Furniture',  unit: 'nos',  rate: 180000, material: 'Cafeteria 13-pax fit-out',       perArea: 0 },
+  ladies_toilet:      { trade: 'Plumbing',           unit: 'nos',  rate: 85000,  material: 'Ladies toilet fixtures + tiling', perArea: 0 },
+  gents_toilet:       { trade: 'Plumbing',           unit: 'nos',  rate: 85000,  material: 'Gents toilet fixtures + tiling',  perArea: 0 },
+  phone_booth:        { trade: 'Modular Furniture',  unit: 'nos',  rate: 120000, material: 'Acoustic phone booth',           perArea: 0 },
+  // ── Generic / fallback rules ───────────────────────────────────────────
   wall:              { trade: 'Civil',              unit: 'sft',  rate: 85,     material: 'Brick masonry',          perArea: 1 },
   partition:         { trade: 'Gypsum',             unit: 'sft',  rate: 200,    material: 'Gypsum board 75mm',      perArea: 1 },
   glass_partition:   { trade: 'Gypsum',             unit: 'sft',  rate: 650,    material: 'Toughened glass 10mm',    perArea: 1 },
@@ -280,13 +285,8 @@ const BOQ_RULES: Record<string, { trade: string; unit: string; rate: number; mat
   window:            { trade: 'Carpentry',          unit: 'nos',  rate: 8500,   material: 'Aluminium window',       perArea: 0 },
   furniture:         { trade: 'Modular Furniture',  unit: 'nos',  rate: 23000,  material: 'Workstation 1200×750',   perArea: 0 },
   workstation:       { trade: 'Modular Furniture',  unit: 'nos',  rate: 23000,  material: 'Workstation 1200×750',   perArea: 0 },
-  cabin:             { trade: 'Modular Furniture',  unit: 'nos',  rate: 85000,  material: 'Cabin enclosure',        perArea: 0 },
   meeting_room:      { trade: 'Modular Furniture',  unit: 'nos',  rate: 150000, material: 'Meeting room fit-out',   perArea: 0 },
   reception:         { trade: 'Modular Furniture',  unit: 'nos',  rate: 65000,  material: 'Reception counter',      perArea: 0 },
-  phone_booth:       { trade: 'Modular Furniture',  unit: 'nos',  rate: 120000, material: 'Acoustic phone booth',   perArea: 0 },
-  server_room:       { trade: 'Modular Furniture',  unit: 'nos',  rate: 180000, material: 'Server room fit-out',    perArea: 0 },
-  store_room:        { trade: 'Carpentry',          unit: 'nos',  rate: 45000,  material: 'Shelving + storage',     perArea: 0 },
-  cafeteria:         { trade: 'Modular Furniture',  unit: 'nos',  rate: 180000, material: 'Cafeteria fit-out',      perArea: 0 },
   pantry:            { trade: 'Modular Furniture',  unit: 'nos',  rate: 85000,  material: 'Pantry counter + sink',  perArea: 0 },
   toilet:            { trade: 'Plumbing',           unit: 'nos',  rate: 65000,  material: 'Toilet accessories',     perArea: 0 },
   electrical:        { trade: 'Electrical',         unit: 'points', rate: 2250, material: 'Wiring + accessory',     perArea: 0 },
@@ -309,6 +309,26 @@ async function computeQuantities(projectId: number, drawingId?: number) {
   const rows = (objects ?? []).map((o: any) => {
     const rule = BOQ_RULES[o.object_type];
     if (!rule) return null;
+    // Label-based override for rooms — match specific room types
+    const label = (o.label ?? '').toLowerCase();
+    const LABEL_RULES: Record<string, typeof rule> = {
+      'reception':   { trade: 'Modular Furniture', unit: 'nos', rate: 85000,  material: 'Reception counter + waiting area', perArea: 0 },
+      'meeting pod': { trade: 'Modular Furniture', unit: 'nos', rate: 120000, material: 'Acoustic meeting pod 2-seater', perArea: 0 },
+      'cabin':       { trade: 'Modular Furniture', unit: 'nos', rate: 85000,  material: 'Cabin partition + furniture', perArea: 0 },
+      'server room': { trade: 'Modular Furniture', unit: 'nos', rate: 180000, material: 'Server room fit-out', perArea: 0 },
+      'store room':  { trade: 'Carpentry', unit: 'nos', rate: 45000, material: 'Shelving + storage', perArea: 0 },
+      'cafeteria':   { trade: 'Modular Furniture', unit: 'nos', rate: 180000, material: 'Cafeteria 13-pax fit-out', perArea: 0 },
+      'phone booth': { trade: 'Modular Furniture', unit: 'nos', rate: 120000, material: 'Acoustic phone booth', perArea: 0 },
+      'discussion':  { trade: 'Modular Furniture', unit: 'nos', rate: 95000,  material: 'Discussion booth', perArea: 0 },
+      'ladies toilet': { trade: 'Plumbing', unit: 'nos', rate: 85000, material: 'Ladies toilet fixtures + tiling', perArea: 0 },
+      'gents toilet':  { trade: 'Plumbing', unit: 'nos', rate: 85000, material: 'Gents toilet fixtures + tiling', perArea: 0 },
+    };
+    let effectiveRule = rule;
+    if (o.object_type === 'room') {
+      for (const [key, lr] of Object.entries(LABEL_RULES)) {
+        if (label.includes(key)) { effectiveRule = lr; break; }
+      }
+    }
     const bbox = (o.bbox as any) ?? {};
     // Use quantity_estimate from MiMo directly — it knows the floor plan scale.
     // For area-based items, MiMo returns sqft in quantity_estimate.
@@ -317,18 +337,18 @@ async function computeQuantities(projectId: number, drawingId?: number) {
       ? o.quantity_estimate
       : 1;
     // perArea=1 means MiMo returns sqft area; perArea=0 means count (use 1)
-    const qty = rule.perArea ? Math.round(rawQty) : 1;
-    const total = Math.round(qty * rule.rate * 100) / 100;
+    const qty = effectiveRule.perArea ? Math.round(rawQty) : 1;
+    const total = Math.round(qty * effectiveRule.rate * 100) / 100;
     return {
       project_id: projectId,
       drawing_id: o.drawing_id,
       detected_object_id: Number(o.id),
-      description: `${o.label ?? o.object_type} — ${rule.material}`,
-      trade: rule.trade,
-      material_name: rule.material,
+      description: `${o.label ?? o.object_type} — ${effectiveRule.material}`,
+      trade: effectiveRule.trade,
+      material_name: effectiveRule.material,
       quantity: qty,
-      unit: rule.unit,
-      rate: rule.rate,
+      unit: effectiveRule.unit,
+      rate: effectiveRule.rate,
       total,
       rule_id: null,
       ruleset_version: 'office_india_v1',
@@ -836,6 +856,30 @@ serve(async (req) => {
       if (m && method === 'POST') {
         const b = await req.json();
         return ok(await selectMaterialForBoqItem(Number(m[1]), Number(b.material_id)));
+      }
+    }
+    // PATCH /boq-items/:id — inline edit quantity / rate / total
+    {
+      const m = path.match(/^\/boq-items\/(\d+)$/);
+      if (m && method === 'PATCH') {
+        const id = Number(m[1]);
+        const b = await req.json();
+        // Only allow updating quantity, rate, total (whitelist safe columns)
+        const allowed: Record<string, unknown> = {};
+        if (b.quantity !== undefined) allowed.quantity = b.quantity;
+        if (b.rate !== undefined) allowed.rate = b.rate;
+        if (b.total !== undefined) allowed.total = b.total;
+        if (Object.keys(allowed).length === 0) {
+          return fail('BAD_REQUEST', 'No valid fields to update (quantity, rate, total)', 400);
+        }
+        const { data, error } = await adminClient
+          .from('boq_items')
+          .update(allowed)
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) throw error;
+        return ok(data);
       }
     }
 

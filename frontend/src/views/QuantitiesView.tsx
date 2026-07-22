@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useProjectStore } from '../store';
-import { computeQuantities, fetchBOQ } from '../api/boq';
+import { computeQuantities, fetchBOQ, updateBoqItem } from '../api/boq';
 import Empty from '../components/Empty';
 import { formatINR } from '../ui/format';
 import type { BOQLineItem } from '../types';
@@ -11,6 +11,8 @@ export default function QuantitiesView() {
   const [loading, setLoading] = useState(true);
   const [phase, setPhase] = useState<'idle' | 'computing'>('idle');
   const [filter, setFilter] = useState('');
+  const [editingCell, setEditingCell] = useState<{ itemId: number; field: 'quantity' | 'rate' } | null>(null);
+  const [savingId, setSavingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!project) return;
@@ -30,6 +32,38 @@ export default function QuantitiesView() {
       setItems(r.trades);
     } finally { setPhase('idle'); }
   }
+
+  /** Update a single field on a BOQ item, recalculate total, persist to backend */
+  const handleFieldSave = useCallback(async (itemId: number, field: 'quantity' | 'rate', rawValue: string) => {
+    setEditingCell(null);
+    const numVal = parseFloat(rawValue);
+    if (isNaN(numVal) || numVal < 0) return; // invalid — silently revert
+
+    setItems((prev) => {
+      const next = prev.map((it) => {
+        if (it.id !== itemId) return it;
+        const updated = { ...it, [field]: numVal };
+        updated.total = Math.round((updated.quantity * updated.rate) * 100) / 100;
+        return updated;
+      });
+
+      // Fire-and-forget persistence; optimistic update already applied
+      const updatedItem = next.find((it) => it.id === itemId);
+      if (updatedItem) {
+        setSavingId(itemId);
+        updateBoqItem(itemId, {
+          quantity: updatedItem.quantity,
+          rate: updatedItem.rate,
+          total: updatedItem.total,
+        }).catch((err) => {
+          console.error('[QuantitiesView] PATCH failed', err);
+          // Revert to server state on failure
+          fetchBOQ(project!.id).then((r) => setItems(r.trades));
+        }).finally(() => setSavingId(null));
+      }
+      return next;
+    });
+  }, [project?.id]);
 
   const byTrade = useMemo<{ trade: string; items: BOQLineItem[]; total: number }[]>(() => {
     const map: Record<string, { trade: string; items: BOQLineItem[]; total: number }> = {};
@@ -119,9 +153,31 @@ export default function QuantitiesView() {
                           )}
                         </td>
                         <td className="num">{it.unit}</td>
-                        <td className="num" style={{ textAlign: 'right' }}>{it.quantity}</td>
+                        <td className="num" style={{ textAlign: 'right' }}>
+                          <EditableCell
+                            itemId={it.id}
+                            field="quantity"
+                            value={it.quantity}
+                            editingCell={editingCell}
+                            setEditingCell={setEditingCell}
+                            onSave={(val) => handleFieldSave(it.id, 'quantity', val)}
+                            saving={savingId === it.id}
+                            format={(v) => String(v)}
+                          />
+                        </td>
                         <td className="num" style={{ textAlign: 'right', color: 'var(--ink-2)' }}>
-                          {it.rate ? <><span style={{ color: 'var(--ink-4)' }}>₹</span>{formatINR(it.rate)}</> : '—'}
+                          <EditableCell
+                            itemId={it.id}
+                            field="rate"
+                            value={it.rate}
+                            editingCell={editingCell}
+                            setEditingCell={setEditingCell}
+                            onSave={(val) => handleFieldSave(it.id, 'rate', val)}
+                            saving={savingId === it.id}
+                            prefix="₹"
+                            format={(v) => formatINR(v)}
+                            placeholder="—"
+                          />
                         </td>
                         <td className="num" style={{ textAlign: 'right', fontWeight: 500 }}>
                           {it.total ? <><span style={{ color: 'var(--ink-4)' }}>₹</span>{formatINR(it.total)}</> : '—'}
@@ -136,6 +192,109 @@ export default function QuantitiesView() {
         )}
       </div>
     </div>
+  );
+}
+
+/* ── Inline-editable cell ─────────────────────────────────────────────────── */
+
+interface EditableCellProps {
+  itemId: number;
+  field: 'quantity' | 'rate';
+  value: number;
+  editingCell: { itemId: number; field: 'quantity' | 'rate' } | null;
+  setEditingCell: (c: { itemId: number; field: 'quantity' | 'rate' } | null) => void;
+  onSave: (raw: string) => void;
+  saving?: boolean;
+  prefix?: string;
+  format?: (v: number) => string;
+  placeholder?: string;
+}
+
+function EditableCell({
+  itemId, field, value, editingCell, setEditingCell, onSave, saving, prefix, format, placeholder,
+}: EditableCellProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isEditing = editingCell?.itemId === itemId && editingCell?.field === field;
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const display = format ? format(value) : String(value);
+
+  if (isEditing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        step="any"
+        min="0"
+        defaultValue={value}
+        onBlur={(e) => onSave(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            (e.target as HTMLInputElement).blur(); // triggers onBlur → onSave
+          }
+          if (e.key === 'Escape') {
+            setEditingCell(null);
+          }
+        }}
+        style={{
+          width: '100%',
+          textAlign: 'right',
+          padding: '2px 4px',
+          border: '1px solid var(--ink)',
+          borderRadius: 3,
+          fontSize: 'inherit',
+          fontFamily: 'inherit',
+          background: 'var(--bg)',
+          color: 'var(--ink)',
+          outline: 'none',
+          boxSizing: 'border-box',
+        }}
+      />
+    );
+  }
+
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={() => setEditingCell({ itemId, field })}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') setEditingCell({ itemId, field });
+      }}
+      title="Click to edit"
+      style={{
+        cursor: 'pointer',
+        borderBottom: '1px dashed var(--ink-3)',
+        padding: '2px 0',
+        display: 'inline-block',
+        minWidth: 40,
+        transition: 'border-color 0.15s, background 0.15s',
+        borderRadius: 2,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'rgba(0,0,0,0.04)';
+        e.currentTarget.style.borderBottomColor = 'var(--ink)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent';
+        e.currentTarget.style.borderBottomColor = 'var(--ink-3)';
+      }}
+    >
+      {saving ? (
+        <span style={{ opacity: 0.5, fontSize: 11 }}>…</span>
+      ) : (
+        <>
+          {prefix && <span style={{ color: 'var(--ink-4)' }}>{prefix}</span>}
+          {value ? display : (placeholder ?? display)}
+        </>
+      )}
+    </span>
   );
 }
 

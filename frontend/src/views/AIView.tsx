@@ -134,11 +134,6 @@ export default function AIView() {
       <aside style={{ borderRight: '1px solid var(--rule-strong)', padding: '32px', overflow: 'auto' }}>
         <div className="kicker" style={{ marginBottom: 12 }}>AI copilot</div>
         <h2 className="display" style={{ fontSize: 36, fontWeight: 500, lineHeight: 1.05 }}>ask the<br /><em>estimate</em>.</h2>
-        <p style={{ marginTop: 12, color: 'var(--ink-2)', fontSize: 14, maxWidth: 420 }}>
-          Powered by <em>MiMo v2.5</em> via OpenCode Go Premium.
-          Every answer cites BOQ line IDs.
-        </p>
-
         <hr className="hr" style={{ margin: '24px 0' }} />
 
         <div>

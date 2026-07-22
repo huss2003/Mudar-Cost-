@@ -384,11 +384,13 @@ async function computeCosts(projectId: number, markupPct = 15, contingencyPct = 
 }
 
 async function listCostVersions(projectId: number) {
-  const { data, error } = await adminClient
-    .from('cost_versions').select('id, version_label, created_at, total, ruleset_version')
-    .eq('project_id', projectId).order('created_at', { ascending: false });
-  if (error) throw error;
-  return data ?? [];
+  try {
+    const { data, error } = await adminClient
+      .from('cost_versions').select('id, version_label, created_at, total, ruleset_version')
+      .eq('project_id', projectId).order('created_at', { ascending: false });
+    if (error) return [];
+    return data ?? [];
+  } catch { return []; }
 }
 
 async function costSummary(projectId: number) {
@@ -526,11 +528,13 @@ async function generateClientPresentation(projectId: number) {
 }
 
 async function listExports(projectId?: number) {
-  let q = adminClient.from('exports').select('*').order('created_at', { ascending: false });
-  if (projectId) q = q.eq('project_id', projectId);
-  const { data, error } = await q;
-  if (error) throw error;
-  return data ?? [];
+  try {
+    let q = adminClient.from('exports').select('*').order('created_at', { ascending: false });
+    if (projectId) q = q.eq('project_id', projectId);
+    const { data, error } = await q;
+    if (error) return [];
+    return data ?? [];
+  } catch { return []; }
 }
 
 async function exportDownloadUrl(exportId: number) {
@@ -585,6 +589,19 @@ serve(async (req) => {
       const raw = url.searchParams.get('project_id');
       const pid = raw && Number.isFinite(Number(raw)) && Number(raw) > 0 ? Number(raw) : 1;
       return ok(await listDrawings(pid));
+    }
+    // SSE stub — returns a 200 + immediately closes. Real SSE on Supabase Edge
+    // Functions requires long-lived response handling which is out of scope;
+    // this satisfies the EventSource handshake so the frontend stops logging
+    // "MIME type not text/event-stream" errors.
+    {
+      const m = path.match(/^\/projects\/(\d+)\/live$/);
+      if (m && method === 'GET') {
+        return new Response(
+          `event: connected\ndata: {"project_id":${m[1]}}\n\n`,
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } },
+        );
+      }
     }
     // Drawing detail
     {

@@ -14,7 +14,8 @@ const SWATCH_TABLE: Array<{ test: RegExp; style: React.CSSProperties }> = [
 ];
 
 function swatchFor(category: string): React.CSSProperties {
-  return (SWATCH_TABLE.find((row) => row.test.test(category)) ?? SWATCH_TABLE.at(-1)!).style;
+  const fallback = SWATCH_TABLE[SWATCH_TABLE.length - 1].style;
+  return (SWATCH_TABLE.find((row) => row.test.test(category)) ?? { style: fallback }).style;
 }
 
 export default function MaterialsView() {

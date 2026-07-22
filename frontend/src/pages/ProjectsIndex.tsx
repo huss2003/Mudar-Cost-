@@ -5,7 +5,7 @@ import { uploadDrawing } from '../api/drawings';
 import { pollDrawingUntilReady } from '../api/sse';
 import type { Project } from '../types';
 import { STATUS_LABELS, STATUS_DOT } from '../types';
-import { formatINR, pad3, fmtDate } from '../ui/format';
+import { formatINR, pad3 } from '../ui/format';
 import Empty from '../components/Empty';
 import Skeleton from '../components/Skeleton';
 

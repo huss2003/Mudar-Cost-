@@ -121,7 +121,7 @@ export default function PlanView() {
       </aside>
 
       <div style={{ position: 'relative', overflow: 'hidden' }}>
-        <CanvasToolbar view={view} is2D={is2D} onViewChange={setViewMode} preset={finishPreset} onPresetChange={setFinishPreset} />
+        <CanvasToolbar is2D={is2D} onViewChange={setViewMode} preset={finishPreset} onPresetChange={setFinishPreset} />
 
         <div className="canvas-grid" style={{ position: 'absolute', top: 56, left: 0, right: 0, bottom: 0 }}
           onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
@@ -160,8 +160,8 @@ export default function PlanView() {
   );
 }
 
-function CanvasToolbar({ view, is2D, onViewChange, preset, onPresetChange }:
-  { view: string; is2D: boolean; onViewChange: (v: any) => void; preset: string; onPresetChange: (p: any) => void }) {
+function CanvasToolbar({ is2D, onViewChange, preset, onPresetChange }:
+  { is2D: boolean; onViewChange: (v: any) => void; preset: string; onPresetChange: (p: any) => void }) {
   return (
     <div style={{
       position: 'absolute', top: 12, left: 12, right: 12, zIndex: 10,

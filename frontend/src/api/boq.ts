@@ -1,5 +1,5 @@
 import client from './client';
-import type { BOQLineItem, BOQResponse, BOQSummaryResponse } from '../types';
+import type { BOQResponse, BOQSummaryResponse, MaterialOption } from '../types';
 
 export async function fetchBOQ(projectId: number): Promise<BOQResponse> {
   const { data } = await client.get<BOQResponse>(`/projects/${projectId}/boq`);
@@ -11,9 +11,9 @@ export async function computeQuantities(projectId: number): Promise<{ task_id: s
   return data;
 }
 
-export async function fetchMaterials(boqItemId: number): Promise<BOQLineItem[]> {
+export async function fetchMaterials(boqItemId: number): Promise<MaterialOption[]> {
   // Backend route: GET /boq-items/{id}/materials  → list of options
-  const { data } = await client.get<BOQLineItem[]>(`/boq-items/${boqItemId}/materials`);
+  const { data } = await client.get<MaterialOption[]>(`/boq-items/${boqItemId}/materials`);
   return data;
 }
 

@@ -17,8 +17,9 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.py" },
-    { "src": "/(.*)", "dest": "/frontend/$1" }
+    { "src": "/(.*?)", "dest": "/frontend/index.html" }
   ],
+  "outputDirectory": "frontend/dist",
   "env": {
     "ENVIRONMENT": "production",
     "SUPABASE_URL": "https://pecnshwflkwpnwiskgmg.supabase.co",

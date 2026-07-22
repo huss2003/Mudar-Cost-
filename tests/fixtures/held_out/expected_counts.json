@@ -1,0 +1,21 @@
+{
+  "clinic_fitout": {
+    "rooms": 4,
+    "cabin": 1,
+    "washroom": 1,
+    "furniture": 1,
+    "total_area_sqft": 346,
+    "low_budget": 2500000,
+    "high_budget": 5000000
+  },
+  "small_office": {
+    "rooms": 5,
+    "cabin": 2,
+    "washroom": 1,
+    "workstations": 4,
+    "glass_doors": 1,
+    "total_area_sqft": 450,
+    "low_budget": 3000000,
+    "high_budget": 6000000
+  }
+}

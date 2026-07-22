@@ -319,7 +319,7 @@ class TestMimoConfig:
 
     def test_defaults(self) -> None:
         config = MimoConfig()
-        assert config.endpoint == "https://api.opencodego.com/v1/chat/completions"
+        assert config.endpoint == "https://api.xiaomimimo.com/v1/chat/completions"
         assert config.model_key == "mimo-v2.5"
         assert config.max_retries == 3
         assert config.timeout_seconds == 60

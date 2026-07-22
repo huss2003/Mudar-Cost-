@@ -60,6 +60,12 @@ ai_calls: Counter = Counter(
     ["provider", "model", "outcome"],
 )
 
+mock_mode_fallback: Counter = Counter(
+    "ace_mock_mode_fallback_total",
+    "Count of mock-mode fallback activations (dev environment, no API key)",
+    ["provider", "model"],
+)
+
 http_requests: Counter = Counter(
     "ace_http_requests_total",
     "HTTP requests",

@@ -212,7 +212,7 @@ class TestCostLogging:
             args = mock_log.call_args
             assert args[0][0] == "ai_call" or len(args[0]) > 0
             kwargs = args[1]
-            assert kwargs.get("model") == "deepseek-v4-flash"
+            assert kwargs.get("model") == "mimo-v2.5"
             assert kwargs.get("status") == "mock"
             assert kwargs.get("prompt_tokens", 0) > 0
             assert kwargs.get("cost_usd") is not None
@@ -297,8 +297,8 @@ class TestConfig:
         """Default DeepSeekConfig has expected values."""
         config = DeepSeekConfig()
         assert config.api_key == ""
-        assert config.endpoint == "https://api.opencodego.com/v1/chat/completions"
-        assert config.model_key == "deepseek-v4-flash"
+        assert config.endpoint == "https://api.xiaomimimo.com/v1/chat/completions"
+        assert config.model_key == "mimo-v2.5"
         assert config.max_retries == 3
         assert config.timeout_seconds == 120
         assert config.cost_per_1k_input == 0.0005

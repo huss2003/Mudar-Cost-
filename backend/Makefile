@@ -1,4 +1,4 @@
-.PHONY: help install dev-install test lint format clean migrate seed verify-seed run
+.PHONY: help install dev-install test lint format clean migrate seed verify-seed verify-ai run
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -33,6 +33,12 @@ seed: ## Run seed data loader
 
 verify-seed: ## Validate seed data integrity
 	@python scripts/verify_seed.py
+
+verify-ai: ## Verify AI providers (MiMo + DeepSeek) are reachable
+	python scripts/verify_ai_connectivity.py
+
+generalize: ## Run held-out validation tests
+	python scripts/generalize_test.py
 
 run-dev: ## Run development server
 	uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

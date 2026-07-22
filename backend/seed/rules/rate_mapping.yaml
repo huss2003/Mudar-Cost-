@@ -1,0 +1,389 @@
+# Auto Cost Engine — Rate Mapping
+# Links every BOQ object_type to the seeded Material Master or Labour rules.
+# All calibrated rates trace back to a source in either:
+#   - seed/reference/materials.yaml  (source: material_master)
+#   - seed/rules/labour_rules.yaml   (source: labour)
+#
+# Every rate_source reference is verified by `make verify-rates` to ensure
+# no orphan rates exist.
+#
+# Calibration project: G.U. Office
+# Calibration date:    2026-07-22
+version: 1
+calibration_project: "G.U. Office"
+calibration_date: "2026-07-22"
+
+rate_mappings:
+  # ==========================================================================
+  # FLOORING
+  # ==========================================================================
+  - object_type: vitrified_tiles
+    source: material_master
+    material_code: "KJ-VT-6060"
+    calibrated_rate: 55.0
+    unit: sqft
+    notes: "Kajaria Vitrified Tile 600×600mm"
+
+  - object_type: carpet_flooring
+    source: material_master
+    material_code: "IF-CT-5050"
+    calibrated_rate: 180.0
+    unit: sqft
+    notes: "Interface Modular Carpet Tile 500×500mm"
+
+  - object_type: broadloom_carpet
+    source: material_master
+    material_code: "MI-BL-4M"
+    calibrated_rate: 220.0
+    unit: sqft
+    notes: "Milliken Broadloom Carpet"
+
+  - object_type: vinyl_flooring
+    source: material_master
+    material_code: "TK-VS-2MM"
+    calibrated_rate: 160.0
+    unit: sqft
+    notes: "Tarkett Vinyl Sheet Flooring 2mm"
+
+  - object_type: laminate_flooring
+    source: material_master
+    material_code: "GL-LM-8MM"
+    calibrated_rate: 75.0
+    unit: sqft
+    notes: "Greenlam Laminate Flooring 8mm"
+
+  # ==========================================================================
+  # GLASS
+  # ==========================================================================
+  - object_type: glass_partition
+    source: material_master
+    material_code: "SG-TG-12-CLR"
+    calibrated_rate: 320.0
+    unit: sqft
+    notes: "Saint Gobain Toughened Glass 12mm Clear"
+
+  - object_type: laminated_glass
+    source: material_master
+    material_code: "SG-LM-12-CLR"
+    calibrated_rate: 120.0
+    unit: sqft
+    notes: "Saint Gobain Laminated Glass 12mm Clear"
+
+  - object_type: mirror_glass
+    source: material_master
+    material_code: "MG-MR-6-SLV"
+    calibrated_rate: 65.0
+    unit: sqft
+    notes: "Modiguard Mirror Glass 6mm Silver"
+
+  # ==========================================================================
+  # GYPSUM / PARTITIONS
+  # ==========================================================================
+  - object_type: gypsum_partition
+    source: material_master
+    material_code: "SGG-GB-12.5-STD"
+    calibrated_rate: 85.0
+    unit: sqft
+    notes: "Saint Gobain Gyproc 12.5mm Board — primary board material"
+
+  - object_type: gypsum_fireline
+    source: material_master
+    material_code: "SGG-FL-12.5"
+    calibrated_rate: 110.0
+    unit: sqft
+    notes: "Gyproc Fireline 12.5mm Board"
+
+  - object_type: metal_stud
+    source: material_master
+    material_code: "SGG-MS-75-3M"
+    calibrated_rate: 185.0
+    unit: nos
+    notes: "Metal Stud 75mm 3000mm"
+
+  - object_type: metal_channel
+    source: material_master
+    material_code: "SGG-CH-75-3M"
+    calibrated_rate: 165.0
+    unit: nos
+    notes: "Channel 75mm 3000mm"
+
+  # ==========================================================================
+  # CEILING
+  # ==========================================================================
+  - object_type: false_ceiling
+    source: material_master
+    material_code: "AW-GRID-6060"
+    calibrated_rate: 95.0
+    unit: sqft
+    notes: "Armstrong Grid Ceiling 600×600mm — mineral fibre tile"
+
+  - object_type: gypsum_ceiling
+    source: material_master
+    material_code: "SGG-CB-12.5"
+    calibrated_rate: 75.0
+    unit: sqft
+    notes: "Saint Gobain Gypsum Ceiling Board 12.5mm"
+
+  # ==========================================================================
+  # PAINT / FINISHES
+  # ==========================================================================
+  - object_type: paint_wall
+    source: material_master
+    material_code: "AP-ROY-20L"
+    calibrated_rate: 35.0
+    unit: sqft
+    notes: "Asian Paints Royale Luxury Emulsion — per sqft coverage"
+
+  - object_type: primer
+    source: material_master
+    material_code: "AP-PR-20L"
+    calibrated_rate: 2800.0
+    unit: nos
+    notes: "Asian Paints Water Based Primer 20L bucket"
+
+  - object_type: wall_putty
+    source: material_master
+    material_code: "AP-WP-20KG"
+    calibrated_rate: 650.0
+    unit: bag
+    notes: "Asian Paints Wall Care Putty 20kg"
+
+  # ==========================================================================
+  # ELECTRICAL
+  # ==========================================================================
+  - object_type: electrical_point
+    source: material_master
+    material_code: "LG-SW-PT"
+    calibrated_rate: 35.0
+    unit: point
+    notes: "Legrand Modular Switch Point — material per point"
+
+  - object_type: led_downlight
+    source: material_master
+    material_code: "PH-DL-12W"
+    calibrated_rate: 1200.0
+    unit: piece
+    notes: "Philips LED Downlight 12W"
+
+  - object_type: pvc_conduit
+    source: material_master
+    material_code: "LG-PC-20-3M"
+    calibrated_rate: 75.0
+    unit: nos
+    notes: "PVC Conduit Pipe 20mm 3m"
+
+  # ==========================================================================
+  # HVAC
+  # ==========================================================================
+  - object_type: split_ac_1_5tr
+    source: material_master
+    material_code: "DK-1.5TR-SPL"
+    calibrated_rate: 42000.0
+    unit: piece
+    notes: "Daikin 1.5TR Split AC"
+
+  - object_type: split_ac_2tr
+    source: material_master
+    material_code: "VT-2TR-SPL"
+    calibrated_rate: 38000.0
+    unit: piece
+    notes: "Voltas 2TR Split AC"
+
+  - object_type: cassette_ac_2tr
+    source: material_master
+    material_code: "BS-CS-2TR"
+    calibrated_rate: 55000.0
+    unit: piece
+    notes: "Blue Star Cassette AC 2TR"
+
+  # ==========================================================================
+  # PLUMBING
+  # ==========================================================================
+  - object_type: cpvc_pipe
+    source: material_master
+    material_code: "JG-CPVC-20"
+    calibrated_rate: 45.0
+    unit: piece
+    notes: "Jaguar CPVC Pipe 20mm"
+
+  - object_type: wc_set
+    source: material_master
+    material_code: "HN-WC-SET"
+    calibrated_rate: 3500.0
+    unit: set
+    notes: "Hindware Sanitary WC Set"
+
+  - object_type: washbasin
+    source: material_master
+    material_code: "CR-WB-6045"
+    calibrated_rate: 2800.0
+    unit: piece
+    notes: "Cera Washbasin 600×450mm"
+
+  # ==========================================================================
+  # HARDWARE
+  # ==========================================================================
+  - object_type: mortise_lock
+    source: material_master
+    material_code: "GD-ML-850"
+    calibrated_rate: 850.0
+    unit: piece
+    notes: "Godrej Mortise Lock"
+
+  - object_type: hinges
+    source: material_master
+    material_code: "HT-HG-100"
+    calibrated_rate: 120.0
+    unit: pair
+    notes: "Hettich Hinges 100mm"
+
+  - object_type: drawer_slide
+    source: material_master
+    material_code: "EB-DS-450"
+    calibrated_rate: 350.0
+    unit: set
+    notes: "Ebco Drawer Slide 450mm"
+
+  # ==========================================================================
+  # FURNITURE MATERIALS
+  # ==========================================================================
+  - object_type: plywood_18mm
+    source: material_master
+    material_code: "GP-PLY-18"
+    calibrated_rate: 65.0
+    unit: sqft
+    notes: "Greenply Plywood 18mm"
+
+  - object_type: teak_wood
+    source: material_master
+    material_code: "CT-TEAK-1"
+    calibrated_rate: 120.0
+    unit: sqft
+    notes: "Century Teak Wood"
+
+  - object_type: prelam_board
+    source: material_master
+    material_code: "AT-PLB-18"
+    calibrated_rate: 95.0
+    unit: sqft
+    notes: "Action Tesa Pre-laminated Board 18mm"
+
+  # ==========================================================================
+  # WORKSTATIONS & SEATING
+  # ==========================================================================
+  - object_type: modular_workstation
+    source: material_master
+    material_code: "GI-WS-1515-MOD"
+    calibrated_rate: 45000.0
+    unit: station
+    notes: "Godrej Interio Modular Workstation 1500×1500mm"
+
+  - object_type: premium_chair
+    source: material_master
+    material_code: "SC-GESTURE"
+    calibrated_rate: 78000.0
+    unit: nos
+    notes: "Steelcase Gesture Chair"
+
+  # ==========================================================================
+  # WATERPROOFING
+  # ==========================================================================
+  - object_type: waterproofing
+    source: material_master
+    material_code: "DF-WP-5KG"
+    calibrated_rate: 18.0
+    unit: sqft
+    notes: "Dr Fixit Waterproofing Compound — per sqft coverage"
+
+  # ==========================================================================
+  # NETWORKING / DATA
+  # ==========================================================================
+  - object_type: cat6_cable
+    source: material_master
+    material_code: "DL-CAT6-305"
+    calibrated_rate: 8500.0
+    unit: box
+    notes: "D-Link CAT6 UTP Cable 305m Box"
+
+  - object_type: network_switch
+    source: material_master
+    material_code: "CS-CBS250-8T"
+    calibrated_rate: 15000.0
+    unit: piece
+    notes: "Cisco CBS250-8T Switch"
+
+  # ==========================================================================
+  # LABOUR RATES
+  # Each labour_code follows the pattern <trade>_<skill_level> from
+  # seed/rules/labour_rules.yaml. The calibrated_rate is the total_rate
+  # from that rule.
+  # ==========================================================================
+  - object_type: glass_labour
+    source: labour
+    labour_code: glass_skilled
+    calibrated_rate: 1500.0
+    unit: day
+    notes: "Glass Installer — skilled daily rate"
+
+  - object_type: painting_labour
+    source: labour
+    labour_code: painting_skilled
+    calibrated_rate: 1000.0
+    unit: day
+    notes: "Painter — skilled daily rate"
+
+  - object_type: ceiling_labour
+    source: labour
+    labour_code: ceiling_skilled
+    calibrated_rate: 1200.0
+    unit: day
+    notes: "Ceiling Installer — skilled daily rate"
+
+  - object_type: electrical_labour
+    source: labour
+    labour_code: electrical_skilled
+    calibrated_rate: 1800.0
+    unit: day
+    notes: "Electrician — skilled daily rate"
+
+  - object_type: hvac_labour
+    source: labour
+    labour_code: hvac_skilled
+    calibrated_rate: 2150.0
+    unit: day
+    notes: "HVAC Technician — skilled daily rate"
+
+  - object_type: carpentry_labour
+    source: labour
+    labour_code: carpentry_skilled
+    calibrated_rate: 1400.0
+    unit: day
+    notes: "Carpenter — skilled daily rate"
+
+  - object_type: plumbing_labour
+    source: labour
+    labour_code: plumbing_skilled
+    calibrated_rate: 1800.0
+    unit: day
+    notes: "Plumber — skilled daily rate"
+
+  - object_type: flooring_labour
+    source: labour
+    labour_code: flooring_semi-skilled
+    calibrated_rate: 1200.0
+    unit: day
+    notes: "Flooring Installer — semi-skilled daily rate"
+
+  - object_type: helper_labour
+    source: labour
+    labour_code: general_unskilled
+    calibrated_rate: 720.0
+    unit: day
+    notes: "Helper — unskilled daily rate"
+
+  - object_type: supervisor_labour
+    source: labour
+    labour_code: general_supervisor
+    calibrated_rate: 3300.0
+    unit: day
+    notes: "Supervisor — daily rate"

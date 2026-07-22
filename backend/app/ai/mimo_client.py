@@ -26,7 +26,7 @@ from app.ai.circuit_breaker import CircuitBreaker
 from app.ai.models import ModelSpec, get_model, ModelCapability
 from app.config import settings
 from app.schemas.detection import DetectedObjectCreate, DetectionResult
-from app.services.metrics import ai_calls
+from app.services.metrics import ai_calls, mock_mode_fallback
 from app.services.trace import get_trace_id
 
 logger = structlog.get_logger(__name__)
@@ -60,7 +60,7 @@ class MimoConfig:
     """Configuration for the MiMo v2.5 Vision API client."""
 
     api_key: str = ""  # Set explicitly or auto-resolved from env
-    endpoint: str = "https://api.opencodego.com/v1/chat/completions"
+    endpoint: str = "https://api.xiaomimimo.com/v1/chat/completions"
     model_key: str = "mimo-v2.5"
     max_retries: int = 3
     timeout_seconds: int = 60
@@ -113,6 +113,10 @@ class MimoVisionClient:
         elif is_dev and not api_key:
             self.config.mock_mode = True
             logger.info("MiMo mock mode auto-enabled (dev environment, no key)")
+            mock_mode_fallback.labels(
+                provider="mimo",
+                model=self.config.model_key,
+            ).inc()
         elif not is_dev and not api_key:
             raise ValueError(
                 "MIMO_API_KEY is not set and ENVIRONMENT is not 'development'. "
@@ -304,13 +308,13 @@ class MimoVisionClient:
                 resp = requests.post(
                     self.config.endpoint,
                     headers={
-                        "Authorization": f"Bearer {self.config.api_key}",
+                        "api-key": self.config.api_key,
                         "Content-Type": "application/json",
                     },
                     json={
                         "model": self.config.model_key,
                         "messages": messages,
-                        "max_tokens": 4096,
+                        "max_tokens": 8192,
                     },
                     timeout=self.config.timeout_seconds,
                 )

@@ -34,7 +34,7 @@ rates:
   blockwork:
     rate: 450.0
     unit: "sft."
-    description: "Providing and erecting 6" thk Siporex block wall in cement and sand mortar compl"
+    description: 'Providing and erecting 6 inch thk Siporex block wall in cement and sand mortar complete'
   cable_manager:
     rate: 1300.0
     unit: "No."
@@ -238,7 +238,7 @@ rates:
   providing_and_fixing_m_s_frame_4"x4"thic:
     rate: 265000.0
     unit: "L/S"
-    description: "Providing and fixing M S Frame 4"x4"Thick squre pipe Supply & Installation as pe"
+    description: 'Providing and fixing M S Frame 4x4 inch Thick square pipe Supply and Installation as per design'
   push_pull_set:
     rate: 550.0
     unit: "Nos"
@@ -262,7 +262,7 @@ rates:
   small_pots_plants:
     rate: 15000.0
     unit: "LS"
-    description: "Supply of small 6" pots with plants above storage & 6 nos. 4' ht planters."
+    description: 'Supply of small 6 inch pots with plants above storage and 6 nos 4 ft ht planters'
   smoke_detector:
     rate: 140.0
     unit: "Sq.ft"

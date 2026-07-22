@@ -1,5 +1,5 @@
-.PHONY: up down logs restart ps clean test seed migrate db-shell shell doctor
-.PHONY: prod-up prod-down prod-logs prod-ps prod-restart backup restore
+.PHONY: up down logs restart ps clean test seed migrate db-shell shell doctor verify-seed verify-rates
+.PHONY: prod-up prod-down prod-logs prod-ps prod-restart backup restore verify-ai train-loop smoke smoke-prod metrics-up metrics-down
 .PHONY: prod-backup prod-restore list-backups
 
 # ---------------------------------------------------------------------------
@@ -75,6 +75,21 @@ smoke-prod: ## Run smoke tests against the production stack
 
 doctor: ## Run pre-flight checks (env vars, services)
 	@python scripts/doctor.py
+
+verify-ai: ## Verify MiMo/DeepSeek providers are reachable
+	cd backend && python scripts/verify_ai_connectivity.py
+
+generalize: ## Run held-out validation tests
+	cd backend && python scripts/generalize_test.py
+
+verify-seed: ## Verify seed data integrity
+	cd backend && python scripts/verify_seed.py
+
+verify-rates: ## Verify all rate mappings reference valid master data
+	cd backend && python scripts/verify_rates.py
+
+train-loop: ## Run the real-data training loop
+	cd backend && python -m app.ai.training
 
 # ---------------------------------------------------------------------------
 # Database Integrity

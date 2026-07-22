@@ -22,8 +22,7 @@ RUN curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
 COPY backup-db.sh /usr/local/bin/backup-db.sh
 RUN chmod +x /usr/local/bin/backup-db.sh
 
-# Create cron job: run backup daily at 2 AM
-RUN mkdir -p /etc/periodic/daily
+# Install crontab: run backup daily at 2 AM
 COPY backup-cron /etc/crontabs/root
 
 # Run crond in foreground

@@ -1,0 +1,32 @@
+# =============================================================================
+# Auto Cost Engine — Frontend .dockerignore
+# =============================================================================
+# Exclude development artifacts from the Docker build context.
+# =============================================================================
+
+# Node
+node_modules/
+dist/
+
+# Environment
+.env
+.env.local
+.env.prod
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Tests (not needed in production build)
+__tests__/
+vitest.config.ts

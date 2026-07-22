@@ -35,6 +35,13 @@ from app.models.core import Drawing
 from app.models.detection import DetectedObject
 from app.schemas.detection import DetectedObjectCreate, DetectionResult
 
+from app.ai.detection_cache import (
+    cache_result,
+    compute_sha256,
+    get_cached_result,
+    rebuild_detection_from_cache,
+)
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -250,72 +257,132 @@ async def enhance_detection(
             )
 
             # ──────────────────────────────────────────────────────────────
-            # 3. Run AI detection: rasterize → MiMo
+            # 3. Run AI detection: sha256 cache check → rasterize → MiMo
             # ──────────────────────────────────────────────────────────────
             ai_objects: List[DetectedObjectCreate] = []
             rasterizer = _get_rasterizer()
             mimo = _get_mimo_client()
+            png_paths: List[str] = []
 
-            if rasterizer is None or mimo is None:
-                ai_unavailable_reason = (
-                    "rasterizer unavailable" if rasterizer is None else ""
+            # Compute sha256 of the uploaded file for caching
+            try:
+                with open(local_path, "rb") as _f:
+                    file_bytes = _f.read()
+                file_sha256 = compute_sha256(file_bytes)
+                logger.info(
+                    "File sha256=%s for drawing %s",
+                    file_sha256[:16],
+                    drawing_id,
                 )
-                if mimo is None:
-                    ai_unavailable_reason = (
-                        "MiMo client unavailable" if not ai_unavailable_reason
-                        else f"{ai_unavailable_reason}, MiMo client unavailable"
-                    )
+            except OSError as exc:
                 logger.warning(
-                    "AI detection modules unavailable (%s) — skipping AI detection "
-                    "[trace_id=%s]",
-                    ai_unavailable_reason,
-                    trace_id or "none",
+                    "Could not compute sha256 for %s: %s — proceeding without cache",
+                    local_path,
+                    exc,
                 )
-            else:
-                png_paths = rasterizer(local_path, dpi=150)
+                file_sha256 = None
 
-                if not png_paths:
-                    logger.warning("Rasterizer returned no PNG pages for %s", local_path)
-                else:
-                    logger.info(
-                        "Rasterized %s → %d PNG pages",
-                        local_path,
-                        len(png_paths),
+            # Try cache first
+            cache_hit = False
+            if file_sha256 is not None:
+                cached = get_cached_result(file_sha256)
+                if cached is not None:
+                    cached_dr = rebuild_detection_from_cache(cached)
+                    if cached_dr is not None and cached_dr.objects:
+                        for obj in cached_dr.objects:
+                            obj.source = "ai"
+                            obj.is_ai_generated = True
+                            obj.ai_status = "available"
+                            ai_objects.append(obj)
+                        cache_hit = True
+                        logger.info(
+                            "Cache HIT — re-using %d cached AI objects for sha256=%s",
+                            len(ai_objects),
+                            file_sha256[:16],
+                        )
+
+            if not cache_hit:
+                if rasterizer is None or mimo is None:
+                    ai_unavailable_reason = (
+                        "rasterizer unavailable" if rasterizer is None else ""
                     )
+                    if mimo is None:
+                        ai_unavailable_reason = (
+                            "MiMo client unavailable" if not ai_unavailable_reason
+                            else f"{ai_unavailable_reason}, MiMo client unavailable"
+                        )
+                    logger.warning(
+                        "AI detection modules unavailable (%s) — skipping AI detection "
+                        "[trace_id=%s]",
+                        ai_unavailable_reason,
+                        trace_id or "none",
+                    )
+                else:
+                    png_paths = rasterizer(local_path, dpi=150)
 
-                    for page_idx, png_path in enumerate(png_paths):
-                        try:
-                            page_result = mimo.detect_objects(
-                                image_path=png_path,
-                                prompt=CAD_PROMPT,
+                    if not png_paths:
+                        logger.warning(
+                            "Rasterizer returned no PNG pages for %s", local_path
+                        )
+                    else:
+                        logger.info(
+                            "Rasterized %s → %d PNG pages",
+                            local_path,
+                            len(png_paths),
+                        )
+
+                        combined_page_objects: List[DetectedObjectCreate] = []
+                        for page_idx, png_path in enumerate(png_paths):
+                            try:
+                                page_result = mimo.detect_objects(
+                                    image_path=png_path,
+                                    prompt=CAD_PROMPT,
+                                )
+                                # Tag every AI object
+                                for obj in page_result.objects:
+                                    obj.source = "ai"
+                                    obj.is_ai_generated = True
+                                    obj.ai_status = "available"
+                                    combined_page_objects.append(obj)
+                                logger.info(
+                                    "Page %d/%d: detected %d objects",
+                                    page_idx + 1,
+                                    len(png_paths),
+                                    len(page_result.objects),
+                                )
+                            except Exception as exc:
+                                logger.warning(
+                                    "MiMo detection failed on page %d (%s): %s "
+                                    "[trace_id=%s]",
+                                    page_idx + 1,
+                                    png_path,
+                                    exc,
+                                    trace_id or "none",
+                                )
+
+                        ai_objects = combined_page_objects
+
+                        # Cache the combined result, but only if at least one page
+                        # completed successfully (status == "completed").
+                        if file_sha256 is not None and combined_page_objects:
+                            combined_dr = DetectionResult(
+                                drawing_id=drawing_id,
+                                status="completed",
+                                objects=combined_page_objects,
+                                errors=[],
+                                source_format=file_type,
                             )
-                            # Tag every AI object
-                            for obj in page_result.objects:
-                                obj.source = "ai"
-                                obj.is_ai_generated = True
-                                obj.ai_status = "available"
-                                ai_objects.append(obj)
-                            logger.info(
-                                "Page %d/%d: detected %d objects",
-                                page_idx + 1,
-                                len(png_paths),
-                                len(page_result.objects),
-                            )
-                        except Exception as exc:
-                            logger.warning(
-                                "MiMo detection failed on page %d (%s): %s "
-                                "[trace_id=%s]",
-                                page_idx + 1,
-                                png_path,
-                                exc,
-                                trace_id or "none",
+                            cache_result(
+                                sha256_digest=file_sha256,
+                                mimo_raw={},
+                                detection_result=combined_dr,
                             )
 
             ai_object_count = len(ai_objects)
             logger.info(
-                "AI detection complete: %d objects across %d pages",
+                "AI detection complete: %d objects%s",
                 ai_object_count,
-                len(png_paths) if png_paths else 0,
+                f" (cache hit)" if cache_hit else f" across {len(png_paths)} pages",
             )
 
             # ──────────────────────────────────────────────────────────────

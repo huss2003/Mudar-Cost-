@@ -61,14 +61,15 @@ class Settings(BaseSettings):
     KEYCLOAK_CLIENT_ID: str = Field(..., alias="KEYCLOAK_CLIENT_ID")
     KEYCLOAK_CLIENT_SECRET: str = Field(..., alias="KEYCLOAK_CLIENT_SECRET")
 
-    # ── AI APIs ──────────────────────────────────────────────────────────────
+    # ── AI APIs — MiMo v2.5 for everything (vision + text) ────────────────────
     MIMO_API_KEY: str = Field(default="", alias="MIMO_API_KEY")
     MIMO_API_BASE: str = Field(
-        default="https://api.opencodego.com/v1", alias="MIMO_API_BASE"
+        default="https://api.xiaomimimo.com/v1", alias="MIMO_API_BASE"
     )
+    # DeepSeek endpoint is aliased to MiMo — MiMo v2.5 handles text too
     DEEPSEEK_API_KEY: str = Field(default="", alias="DEEPSEEK_API_KEY")
     DEEPSEEK_API_BASE: str = Field(
-        default="https://api.opencodego.com/v1", alias="DEEPSEEK_API_BASE"
+        default="https://api.xiaomimimo.com/v1", alias="DEEPSEEK_API_BASE"
     )
 
     # ── CORS ─────────────────────────────────────────────────────────────────

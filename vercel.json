@@ -1,13 +1,28 @@
 {
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/dist",
-  "installCommand": "cd frontend && npm install",
-  "framework": "vite",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.py" },
+    { "src": "/(.*)", "dest": "/frontend/$1" }
   ],
   "env": {
-    "VITE_API_BASE_URL": "https://auto-cost-engine-api.onrender.com",
-    "VITE_ENVIRONMENT": "production"
+    "ENVIRONMENT": "production",
+    "SUPABASE_URL": "https://pecnshwflkwpnwiskgmg.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_GMkHBBICoUbKeg5W1UGtFg_Y-_xU0yb",
+    "MIMO_API_KEY": "sk-sj2opp4kpvdf8lg25py9mzjo1frd1w7uw65u1hquck807kx2"
   }
 }

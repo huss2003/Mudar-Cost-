@@ -590,6 +590,53 @@ serve(async (req) => {
       const pid = raw && Number.isFinite(Number(raw)) && Number(raw) > 0 ? Number(raw) : 1;
       return ok(await listDrawings(pid));
     }
+    // POST /drawings — multipart upload from the ProjectsIndex dropzone
+    // and the PlanView sidebar's "+ Add drawing" button. Accepts the file
+    // in the "file" multipart field, stores it in the 'drawings' bucket,
+    // and creates the drawings row. The frontend does NOT call this path
+    // as JSON; it uses FormData. We try multipart first and fall back to
+    // JSON for any other internal caller.
+    if (path === '/drawings' && method === 'POST') {
+      const raw = url.searchParams.get('project_id');
+      const pid = raw && Number.isFinite(Number(raw)) && Number(raw) > 0 ? Number(raw) : 1;
+      const ct = req.headers.get('content-type') ?? '';
+      let file: File | null = null, name = 'upload', size = 0;
+      if (ct.startsWith('multipart/form-data')) {
+        const fd = await req.formData();
+        const f = fd.get('file');
+        if (f instanceof File) { file = f; name = f.name || 'upload'; size = f.size; }
+      } else {
+        // Fallback: caller posted JSON with a data:URL or already-uploaded file_path
+        const b = await req.json().catch(() => ({}));
+        if (b && b.file_path) {
+          const insert = await adminClient.from('drawings').insert({
+            project_id: pid, name: b.name ?? 'upload',
+            file_path: b.file_path, file_size: b.file_size ?? null,
+            status: 'uploaded',
+          }).select().single();
+          if (insert.error) return fail('DB', insert.error.message, 500);
+          return ok({
+            drawing_id: Number(insert.data!.id), project_id: pid,
+            file_path: b.file_path, status: 'uploaded', task_id: null, task_routing_hint: null,
+          }, 201);
+        }
+      }
+      if (!file) return fail('BAD_REQUEST', 'multipart field "file" missing', 400);
+      const storagePath = `${pid}/${Date.now()}-${name}`;
+      const up = await adminClient.storage.from('drawings').upload(
+        storagePath, file, { contentType: file.type || 'application/octet-stream', upsert: true },
+      );
+      if (up.error) return fail('STORAGE', `upload failed: ${up.error.message}`, 500);
+      const insert = await adminClient.from('drawings').insert({
+        project_id: pid, name, file_path: storagePath, file_size: size, status: 'uploaded',
+      }).select().single();
+      if (insert.error) return fail('DB', insert.error.message, 500);
+      return ok({
+        drawing_id: Number(insert.data!.id), project_id: pid,
+        file_path: storagePath, status: 'uploaded',
+        task_id: null, task_routing_hint: 'pdf-vision',
+      }, 201);
+    }
     // SSE stub — returns a 200 + immediately closes. Real SSE on Supabase Edge
     // Functions requires long-lived response handling which is out of scope;
     // this satisfies the EventSource handshake so the frontend stops logging

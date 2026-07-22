@@ -6,20 +6,16 @@
       "config": {
         "maxLambdaSize": "50mb"
       }
-    },
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
     }
   ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.py" },
-    { "src": "/(.*?)", "dest": "/frontend/index.html" }
-  ],
   "outputDirectory": "frontend/dist",
+  "installCommand": "cd frontend && npm install",
+  "buildCommand": "cd frontend && npm run build",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.py" },
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+  ],
   "env": {
     "ENVIRONMENT": "production",
     "SUPABASE_URL": "https://pecnshwflkwpnwiskgmg.supabase.co",

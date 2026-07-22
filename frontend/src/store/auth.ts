@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-interface User {
+export interface User {
   sub: string;
   email: string;
   name: string;
@@ -10,15 +10,16 @@ interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  checkAuth: () => Promise<void>;
-  logout: () => void;
 }
 
+const DEMO_USER: User = {
+  sub: 'demo',
+  email: 'estimator@autocost.engine',
+  name: 'Estimator',
+  roles: ['estimator'],
+};
+
 export const useAuthStore = create<AuthState>(() => ({
-  user: { sub: 'anonymous', email: 'user@example.com', name: 'Demo User', roles: ['admin'] },
+  user: DEMO_USER,
   isAuthenticated: true,
-  isLoading: false,
-  checkAuth: async () => { /* no-op */ },
-  logout: () => { /* no-op */ },
 }));

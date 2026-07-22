@@ -1,3 +1,3 @@
-export { useProjectStore } from './projectStore';
+export { useProjectStore, selectProjectTotal, VIEW_IDS } from './projectStore';
+export type { ViewMode } from './projectStore';
 export { useAuthStore } from './auth';
-export type { DetectedObject, MaterialOption, BOQItem, ProjectState } from './projectStore';

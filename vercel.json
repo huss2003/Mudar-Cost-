@@ -1,14 +1,28 @@
 {
-  "buildCommand": "cd frontend && npm run build",
+  "buildCommand": "cd frontend && npm install --no-audit --no-fund && npm run build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "cd frontend && npm install",
+  "installCommand": "cd frontend && npm install --no-audit --no-fund",
   "framework": "vite",
   "rewrites": [
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    { "source": "/api/v1/:path*", "destination": "https://pecnshwflkwpnwiskgmg.supabase.co/functions/v1/api/:path*" },
+    { "source": "/((?!assets/|api/).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "https://auto-cost-engine.vercel.app" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS,PATCH" },
+        { "key": "Access-Control-Allow-Headers", "value": "Authorization,Content-Type,Accept,apikey,traceparent" },
+        { "key": "Access-Control-Max-Age", "value": "86400" }
+      ]
+    }
   ],
   "env": {
-    "VITE_ENVIRONMENT": "production",
+    "VITE_API_BASE": "/api/v1",
     "VITE_SUPABASE_URL": "https://pecnshwflkwpnwiskgmg.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "sb_publishable_GMkHBBICoUbKeg5W1UGtFg_Y-_xU0yb"
+    "VITE_SUPABASE_ANON_KEY": "sb_publishable_GMkHBBICoUbKeg5W1UGtFg_Y-_xU0yb",
+    "VITE_ENVIRONMENT": "production",
+    "VITE_APP_NAME": "Auto Cost Engine"
   }
 }

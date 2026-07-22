@@ -1,12 +1,52 @@
 import client from './client';
-import type { Drawing, DetectedObject } from '../types';
+import type {
+  Drawing,
+  DrawingStatusResponse,
+  DrawingUploadResponse,
+  DetectedObject,
+} from '../types';
 
-export async function fetchDrawings(): Promise<Drawing[]> {
-  const response = await client.get('/drawings');
-  return response.data;
+/* ── Drawings ─────────────────────────────────────────────────────── */
+
+export async function fetchDrawings(projectId?: number): Promise<Drawing[]> {
+  const { data } = await client.get<Drawing[]>('/drawings', {
+    params: projectId ? { project_id: projectId } : undefined,
+  });
+  return data;
+}
+
+export async function uploadDrawing(
+  file: File,
+  projectId: number,
+  onProgress?: (pct: number) => void,
+): Promise<DrawingUploadResponse> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const { data } = await client.post<DrawingUploadResponse>('/drawings', fd, {
+    params: { project_id: projectId },
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (e) => {
+      if (e.total && onProgress) onProgress(Math.round((e.loaded * 100) / e.total));
+    },
+  });
+  return data;
+}
+
+export async function fetchDrawingStatus(drawingId: number): Promise<DrawingStatusResponse> {
+  const { data } = await client.get<DrawingStatusResponse>(`/drawings/${drawingId}/status`);
+  return data;
 }
 
 export async function fetchDrawingObjects(drawingId: number): Promise<DetectedObject[]> {
-  const response = await client.get(`/drawings/${drawingId}/objects`);
-  return response.data;
+  const { data } = await client.get<DetectedObject[]>(`/drawings/${drawingId}/objects`);
+  return data;
+}
+
+export async function deleteDrawing(drawingId: number): Promise<void> {
+  await client.delete(`/drawings/${drawingId}`);
+}
+
+export async function fetchObjectTypes(): Promise<{ key: string; label: string; family: string }[]> {
+  const { data } = await client.get('/drawings/types');
+  return data;
 }

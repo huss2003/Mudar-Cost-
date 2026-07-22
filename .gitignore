@@ -46,3 +46,8 @@ backend/tests/eval/.eval-output/
 !.env.example
 
 .vercel
+.env*.local
+
+# Playwright artifacts
+tests/out/
+tests/fixtures/

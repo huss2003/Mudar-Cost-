@@ -37,6 +37,22 @@ export async function fetchDrawingStatus(drawingId: number): Promise<DrawingStat
   return data;
 }
 
+export async function replaceDrawingFile(
+  drawingId: number,
+  file: File,
+  onProgress?: (pct: number) => void,
+): Promise<DrawingUploadResponse> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const { data } = await client.put<DrawingUploadResponse>(`/drawings/${drawingId}`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (e) => {
+      if (e.total && onProgress) onProgress(Math.round((e.loaded * 100) / e.total));
+    },
+  });
+  return data;
+}
+
 export async function fetchDrawingObjects(drawingId: number): Promise<DetectedObject[]> {
   const { data } = await client.get<DetectedObject[]>(`/drawings/${drawingId}/objects`);
   return data;

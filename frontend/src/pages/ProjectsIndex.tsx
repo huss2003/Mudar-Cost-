@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchProjects, createProject } from '../api/projects';
-import { uploadDrawing } from '../api/drawings';
+import { uploadDrawing, replaceDrawingFile } from '../api/drawings';
 import { pollDrawingUntilReady } from '../api/sse';
+import { convertPdfToImages } from '../utils/pdfToImage';
 import type { Project } from '../types';
 import { STATUS_LABELS, STATUS_DOT } from '../types';
 import { formatINR, pad3 } from '../ui/format';
@@ -15,6 +16,7 @@ export default function ProjectsIndex() {
   const [loading, setLoading] = useState(true);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function load() {
@@ -32,19 +34,54 @@ export default function ProjectsIndex() {
     drawings:   projects.filter((p) => p.drawings_count > 0).length,
   }), [projects]);
 
+  function isPdf(file: File): boolean {
+    return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+  }
+
   async function onFiles(files: FileList) {
     const file = files[0];
     if (!file) return;
     setUploading(true);
+    setUploadStatus('');
     try {
-      const proj = await createProject({ name: file.name.replace(/\.[^.]+$/, '') });
-      const res = await uploadDrawing(file, proj.id);
-      await pollDrawingUntilReady(res.drawing_id, { attempts: 60, intervalMs: 1000 });
-      nav(`/projects/${proj.id}/plan`);
+      const projectName = file.name.replace(/\.[^.]+$/, '');
+
+      if (isPdf(file)) {
+        // PDF flow: upload PDF → convert to PNG → replace → detect → navigate
+        setUploadStatus('uploading PDF…');
+        const proj = await createProject({ name: projectName });
+        const res = await uploadDrawing(file, proj.id);
+        const drawingId = res.drawing_id;
+
+        setUploadStatus('converting to PNG…');
+        const pngFiles = await convertPdfToImages(file);
+        if (pngFiles.length === 0) {
+          throw new Error('PDF conversion produced no pages');
+        }
+
+        setUploadStatus('uploading PNG…');
+        await replaceDrawingFile(drawingId, pngFiles[0]);
+
+        setUploadStatus('detecting objects…');
+        await pollDrawingUntilReady(drawingId, { attempts: 60, intervalMs: 1000 });
+
+        nav(`/projects/${proj.id}/plan`);
+      } else {
+        // Non-PDF flow: upload directly → detect → navigate
+        setUploadStatus('uploading…');
+        const proj = await createProject({ name: projectName });
+        const res = await uploadDrawing(file, proj.id);
+
+        setUploadStatus('detecting objects…');
+        await pollDrawingUntilReady(res.drawing_id, { attempts: 60, intervalMs: 1000 });
+
+        nav(`/projects/${proj.id}/plan`);
+      }
     } catch (err: any) {
       alert(`Upload failed: ${err?.message ?? err}`);
     } finally {
       setUploading(false);
+      setUploadStatus('');
     }
   }
 
@@ -78,7 +115,7 @@ export default function ProjectsIndex() {
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files) onFiles(e.dataTransfer.files); }}
-        onClick={() => fileInput.current?.click()}
+        onClick={() => !uploading && fileInput.current?.click()}
         style={{ marginTop: 36, padding: '48px 24px' }}
       >
         <input ref={fileInput} type="file" accept=".dwg,.dxf,.pdf,.png,.jpg,.jpeg" hidden
@@ -100,7 +137,7 @@ export default function ProjectsIndex() {
           </div>
           <div>
             <div className="display" style={{ fontSize: 22, fontStyle: 'italic', color: 'var(--ink)' }}>
-              {uploading ? 'processing…' : 'drop a floor plan here'}
+              {uploading ? uploadStatus || 'processing…' : 'drop a floor plan here'}
             </div>
             <div className="kicker" style={{ marginTop: 8 }}>
               .dwg · .dxf · .pdf · .png — accepted up to 50 MB

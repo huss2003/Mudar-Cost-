@@ -1,5 +1,5 @@
 import client from './client';
-import type { BOQResponse, BOQSummaryResponse, MaterialOption } from '../types';
+import type { BOQLineItem, BOQResponse, BOQSummaryResponse, MaterialOption } from '../types';
 
 export async function fetchBOQ(projectId: number): Promise<BOQResponse> {
   const { data } = await client.get<BOQResponse>(`/projects/${projectId}/boq`);
@@ -23,5 +23,13 @@ export async function selectMaterial(boqItemId: number, materialId: number): Pro
 
 export async function fetchSummary(projectId: number): Promise<BOQSummaryResponse> {
   const { data } = await client.get<BOQSummaryResponse>(`/projects/${projectId}/summary`);
+  return data;
+}
+
+export async function updateBoqItem(
+  itemId: number,
+  fields: Partial<Pick<BOQLineItem, 'quantity' | 'rate' | 'total'>>,
+): Promise<BOQLineItem> {
+  const { data } = await client.patch<BOQLineItem>(`/boq-items/${itemId}`, fields);
   return data;
 }

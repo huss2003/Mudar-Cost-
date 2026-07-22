@@ -1,0 +1,17 @@
+import { chromium } from '@playwright/test';
+const FRONTEND = process.env.BASE || 'http://localhost:5174';
+const browser = await chromium.launch({ args: ['--no-sandbox'] });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+await page.goto(FRONTEND + '/projects/1/costs', { waitUntil: 'networkidle' });
+await page.screenshot({ path: 'tests/out/e2e/costs-deep-read.png', fullPage: false });
+const initial = await page.locator('.num-display').first().textContent();
+console.log(`First read (right after networkidle):  "${initial?.trim()}"`);
+await page.waitForTimeout(1500);
+const afterWait = await page.locator('.num-display').first().textContent();
+console.log(`Second read (after 1.5s wait):         "${afterWait?.trim()}"`);
+const allNumDisplays = await page.locator('.num-display').allTextContents();
+console.log('All .num-display on page:', allNumDisplays.map(s => s.trim()));
+const ref = 6251940;
+const numeric = +(afterWait?.replace(/[^0-9]/g, '') || 0);
+console.log(`Numeric: ${numeric}    Delta vs ref: ${((numeric - ref) / ref * 100).toFixed(3)}%`);
+await browser.close();

@@ -627,8 +627,26 @@ serve(async (req) => {
         storagePath, file, { contentType: file.type || 'application/octet-stream', upsert: true },
       );
       if (up.error) return fail('STORAGE', `upload failed: ${up.error.message}`, 500);
+      // Populate every legacy column I know about so the insert doesn't
+      // hit a NOT NULL constraint we haven't discovered yet. New columns
+      // from the migration (`name`, `file_path`, `file_size`, `width_mm`,
+      // `height_mm`, `detected_at`) are set as well.
       const insert = await adminClient.from('drawings').insert({
-        project_id: pid, name, file_path: storagePath, file_size: size, status: 'uploaded',
+        project_id: pid,
+        name,
+        filename: name,
+        file_type: file.type || 'application/octet-stream',
+        file_path: storagePath,
+        minio_object_key: storagePath,
+        file_size: size,
+        file_size_bytes: size,
+        sha256_hash: '',
+        upload_date: new Date().toISOString(),
+        status: 'uploaded',
+        revision: 1,
+        scale: '1:100',
+        page_count: 0,
+        is_deleted: false,
       }).select().single();
       if (insert.error) return fail('DB', insert.error.message, 500);
       return ok({

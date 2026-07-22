@@ -1,15 +1,23 @@
 {
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.12",
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/(.*)", "destination": "/" }
+  ],
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
   "installCommand": "cd frontend && npm install",
   "framework": "vite",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ],
   "env": {
-    "VITE_API_BASE_URL": "https://auto-cost-engine-backend.vercel.app",
-    "VITE_ENVIRONMENT": "production",
-    "VITE_KEYCLOAK_URL": "http://localhost:8080",
-    "VITE_KEYCLOAK_REALM": "jasfo"
+    "ENVIRONMENT": "production",
+    "SUPABASE_URL": "https://pecnshwflkwpnwiskgmg.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_GMkHBBICoUbKeg5W1UGtFg_Y-_xU0yb",
+    "SUPABASE_JWKS_URL": "https://pecnshwflkwpnwiskgmg.supabase.co/auth/v1/.well-known/jwks.json",
+    "MIMO_API_KEY": "sk-sj2opp4kpvdf8lg25py9mzjo1frd1w7uw65u1hquck807kx2"
   }
 }

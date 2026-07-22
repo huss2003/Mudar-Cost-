@@ -129,7 +129,8 @@ export default function PlanView() {
           onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
         >
           {is2D
-            ? <Plan2D objects={objects} selectedId={selectedId} onSelect={selectObject} />
+            ? <Plan2D objects={objects} selectedId={selectedId} onSelect={selectObject}
+                drawingUrl={drawings.find(d => d.id === drawingId)?.file_path ?? null} />
             : <Plan3D objects={objects} onSelect={selectObject} />}
 
           {drag && (
@@ -211,8 +212,8 @@ function DrawingRow({ d, active, onClick }: { d: Drawing; active: boolean; onCli
   );
 }
 
-function Plan2D({ objects, selectedId, onSelect }:
-  { objects: DetectedObject[]; selectedId: number | null; onSelect: (id: number | null) => void }) {
+function Plan2D({ objects, selectedId, onSelect, drawingUrl }:
+  { objects: DetectedObject[]; selectedId: number | null; onSelect: (id: number | null) => void; drawingUrl: string | null }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
@@ -223,10 +224,21 @@ function Plan2D({ objects, selectedId, onSelect }:
     return () => ro.disconnect();
   }, []);
 
+  /* Convert normalised 0-1 bbox coordinates to mm scale (15 m × 10 m office) */
+  const scaledObjects = useMemo(() =>
+    objects.map((o) => ({
+      ...o,
+      bbox_x: o.bbox_x * 15000,
+      bbox_y: o.bbox_y * 10000,
+      length: o.length * 15000,
+      width:  o.width  * 10000,
+    })),
+  [objects]);
+
   const projection = useMemo(() => {
-    if (objects.length === 0 || size.w === 0 || size.h === 0) return null;
+    if (scaledObjects.length === 0 || size.w === 0 || size.h === 0) return null;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const o of objects) {
+    for (const o of scaledObjects) {
       minX = Math.min(minX, o.bbox_x);
       minY = Math.min(minY, o.bbox_y);
       maxX = Math.max(maxX, o.bbox_x + o.length);
@@ -239,9 +251,9 @@ function Plan2D({ objects, selectedId, onSelect }:
     const ox = (size.w - w * scale) / 2 - minX * scale;
     const oy = (size.h - h * scale) / 2 - minY * scale;
     return { scale, ox, oy };
-  }, [objects, size]);
+  }, [scaledObjects, size]);
 
-  if (!objects.length || !projection) {
+  if (!scaledObjects.length || !projection) {
     return (
       <div ref={containerRef} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', textAlign: 'center' }}>
         <div>
@@ -278,8 +290,18 @@ function Plan2D({ objects, selectedId, onSelect }:
         </defs>
         <rect width={size.w} height={size.h} fill="url(#dot5)" opacity={0.4} />
 
+        {/* Floor plan background image */}
+        {drawingUrl && (
+          <image
+            href={`https://pecnshwflkwpnwiskgmg.supabase.co/storage/v1/object/public/drawings/${drawingUrl}`}
+            x={projection.ox} y={projection.oy}
+            width={15000 * projection.scale} height={10000 * projection.scale}
+            preserveAspectRatio="xMidYMid meet" opacity={0.35}
+          />
+        )}
+
         <g transform={`translate(${projection.ox} ${projection.oy}) scale(${projection.scale})`}>
-          {objects.map((o) => {
+          {scaledObjects.map((o) => {
             const cat = categorizeObjectType(o.object_type);
             const s = OBJECT_STYLE[cat];
             const sel = o.id === selectedId;
@@ -360,6 +382,17 @@ function Row({ shape, stroke, label }: { shape: { w: number; h: number; type: 'r
 }
 
 function Plan3D({ objects, onSelect }: { objects: DetectedObject[]; onSelect: (id: number | null) => void }) {
+  /* Convert normalised 0-1 bbox coordinates to mm scale */
+  const scaledObjects = useMemo(() =>
+    objects.map((o) => ({
+      ...o,
+      bbox_x: o.bbox_x * 15000,
+      bbox_y: o.bbox_y * 10000,
+      length: o.length * 15000,
+      width:  o.width  * 10000,
+    })),
+  [objects]);
+
   return (
     <Canvas shadows camera={{ position: [12, 10, 12], fov: 45 }} style={{ background: 'var(--paper)' }}>
       <ambientLight intensity={0.6} />
@@ -371,7 +404,7 @@ function Plan3D({ objects, onSelect }: { objects: DetectedObject[]; onSelect: (i
         <meshStandardMaterial color="var(--paper-2)" />
       </mesh>
 
-      {objects.slice(0, 80).map((o, i) => {
+      {scaledObjects.slice(0, 80).map((o, i) => {
         const scale = 0.04;
         const x = (o.bbox_x - 5000) * scale + (i % 8 - 4) * 1.2;
         const z = (o.bbox_y - 5000) * scale + (Math.floor(i / 8) - 4) * 1.2;

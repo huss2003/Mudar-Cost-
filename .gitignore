@@ -44,3 +44,5 @@ backend/tests/eval/.eval-output/
 
 # Keep .env.example
 !.env.example
+
+.vercel

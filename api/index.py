@@ -1,10 +1,11 @@
-"""Vercel Python serverless handler for Auto Cost Engine API."""
-import sys, os
+"""Vercel Python serverless handler for Auto Cost Engine."""
+import sys, os, logging
 
 # Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
+backend_dir = os.path.join(os.path.dirname(__file__), '..', 'backend')
+sys.path.insert(0, backend_dir)
 
-# Set defaults for Vercel
+# Set Vercel-appropriate defaults
 os.environ.setdefault("ENVIRONMENT", "production")
 os.environ.setdefault("SECRET_KEY", "vercel-secret-key-32-chars-minimum-ok")
 os.environ.setdefault("CORS_ORIGINS", '["*"]')
@@ -12,27 +13,20 @@ os.environ.setdefault("MINIO_ENDPOINT", "")
 os.environ.setdefault("MINIO_ACCESS_KEY", "")
 os.environ.setdefault("MINIO_SECRET_KEY", "")
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-# Create a minimal app that doesn't import all the heavy modules
-app = FastAPI(title="Auto Cost Engine API", version="1.0.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@app.get("/api/healthz")
-async def healthz():
-    return {"status": "alive"}
-
-@app.get("/api/v1/projects")
-async def list_projects():
-    return {"projects": [], "message": "Supabase-connected mode"}
-
 from mangum import Mangum
-handler = Mangum(app, lifespan="off")
+
+try:
+    from app.main import app
+    handler = Mangum(app, lifespan="off")
+except Exception as e:
+    # Fallback: minimal app if imports fail
+    logging.error(f"Failed to import full app: {e}")
+    from fastapi import FastAPI
+    app = FastAPI(title="Auto Cost Engine")
+    
+    @app.get("/api/healthz")
+    async def healthz():
+        return {"status": "alive", "mode": "fallback"}
+    
+    from mangum import Mangum
+    handler = Mangum(app, lifespan="off")

@@ -627,29 +627,16 @@ serve(async (req) => {
         storagePath, file, { contentType: file.type || 'application/octet-stream', upsert: true },
       );
       if (up.error) return fail('STORAGE', `upload failed: ${up.error.message}`, 500);
-      // The legacy `drawings` table has tight varchar limits on some
-      // legacy columns (e.g., filename varchar(10)). Truncate everything
-      // to short safe values so we never hit a "value too long" error.
-      const shortName = String(name).slice(0, 50);
-      const shortFilename = String(name).slice(0, 8);
-      const shortType = (file.type || 'pdf').slice(0, 10);
+      // Minimal insert: only documented columns. Legacy `filename` is NOT NULL
+      // varchar(10) — truncate to 8 chars. Anything we don't name here is
+      // either NULL or has a Postgres default.
+      const safeFilename = String(name).slice(0, 8);
       const insert = await adminClient.from('drawings').insert({
         project_id: pid,
         name,
-        filename: shortFilename,
-        file_name: shortFilename,
-        file_type: shortType,
+        filename: safeFilename,
         file_path: storagePath,
-        minio_object_key: storagePath,
-        file_size: size,
-        file_size_bytes: size,
-        sha256_hash: '',
-        upload_date: new Date().toISOString(),
         status: 'uploaded',
-        revision: 1,
-        scale: '1',
-        page_count: 0,
-        is_deleted: false,
       }).select().single();
       if (insert.error) return fail('DB', insert.error.message, 500);
       return ok({

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { fetchProject } from '../api/projects';
+import { fetchBOQ } from '../api/boq';
 import { useProjectStore, selectProjectTotal, VIEW_IDS, type ViewMode } from '../store';
 import { formatINR, pad3 } from '../ui/format';
 import PlanView from '../views/PlanView';
@@ -25,6 +26,7 @@ export default function Workspace() {
   const nav = useNavigate();
   const setCurrentProject = useProjectStore((s) => s.setCurrentProject);
   const currentProject = useProjectStore((s) => s.currentProject);
+  const setBoqItems = useProjectStore((s) => s.setBoqItems);
   const total = useProjectStore(selectProjectTotal);
   const [bootError, setBootError] = useState<string | null>(null);
 
@@ -41,7 +43,12 @@ export default function Workspace() {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 12_000);
     fetchProject(pid)
-      .then((p) => { setCurrentProject(p); setBootError(null); })
+      .then((p) => {
+        setCurrentProject(p);
+        setBootError(null);
+        return fetchBOQ(pid);
+      })
+      .then((boq) => { if (boq?.trades) setBoqItems(boq.trades); })
       .catch((e) => {
         if (e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') {
           setBootError('Project load timed out after 12s — the API is unreachable from this preview.');

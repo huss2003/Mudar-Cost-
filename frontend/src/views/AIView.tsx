@@ -1,18 +1,25 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useProjectStore } from '../store';
-import { aiAsk, aiMissingBOQ, aiAnomalies, aiValueEngineering, aiCapabilities } from '../api/ai';
+import { aiAsk, aiMissingBOQ, aiAnomalies, aiValueEngineering } from '../api/ai';
 import { formatINR } from '../ui/format';
 import type { AskResponse, MissingBOQResponse, AnomalyResponse, VEResponse } from '../types';
 
 const SEED_QUESTIONS = [
+  'What is the total project cost?',
+  'Which trade has the highest cost?',
+  'List all items grouped by trade',
+  'Suggest cheaper alternatives',
   'How much will changing all partitions to glass cost?',
-  'Where am I over-spending vs similar projects?',
   'What is missing from this BOQ vs the layout?',
+  'Where am I over-spending vs similar projects?',
   'Suggest two value-engineering moves that save the most without changing look.',
 ];
 
+// ─── Diagnostic types ─────────────────────────────────────────────────────
+
 interface Diagnostic {
   id: 'missing' | 'anoms' | 've';
+  icon: string;
   kicker: string;
   title: string;
   run: (projectId: number) => Promise<any>;
@@ -21,7 +28,7 @@ interface Diagnostic {
 
 const DIAGNOSTICS: Diagnostic[] = [
   {
-    id: 'missing', kicker: 'anomaly check', title: 'What might be missing',
+    id: 'missing', icon: '🔍', kicker: 'Anomaly Check', title: 'What might be missing',
     run: (pid) => aiMissingBOQ(pid),
     render: (d: MissingBOQResponse) => (
       <ul style={listReset}>
@@ -36,7 +43,7 @@ const DIAGNOSTICS: Diagnostic[] = [
     ),
   },
   {
-    id: 'anoms', kicker: 'vs similar projects', title: 'Pricing anomalies',
+    id: 'anoms', icon: '📊', kicker: 'VS Similar Projects', title: 'Pricing anomalies',
     run: (pid) => aiAnomalies(pid),
     render: (d: AnomalyResponse) => (
       <ul style={listReset}>
@@ -57,7 +64,7 @@ const DIAGNOSTICS: Diagnostic[] = [
     ),
   },
   {
-    id: 've', kicker: 'value engineering', title: 'Save here, change nothing',
+    id: 've', icon: '💰', kicker: 'Value Engineering', title: 'Save here, change nothing',
     run: (pid) => aiValueEngineering(pid),
     render: (d: VEResponse) => (
       <>
@@ -73,7 +80,7 @@ const DIAGNOSTICS: Diagnostic[] = [
         ))}
         {d?.total_saving != null && d.total_saving > 0 && (
           <div style={{ paddingTop: 10, fontWeight: 600 }}>
-            <span className="kicker">Total saving</span>
+            <div className="kicker">Total saving</div>
             <div className="num" style={{ fontSize: 22 }}>
               <span className="rupee-pre">₹</span>{formatINR(d.total_saving, { round: true })}
             </div>
@@ -84,6 +91,8 @@ const DIAGNOSTICS: Diagnostic[] = [
   },
 ];
 
+// ─── Styles ───────────────────────────────────────────────────────────────
+
 const listReset: React.CSSProperties = { margin: 0, padding: 0, listStyle: 'none' };
 const liBorder: React.CSSProperties = { padding: '8px 0', borderBottom: '1px solid var(--rule)' };
 const liTitle: React.CSSProperties = { fontSize: 13, fontWeight: 500 };
@@ -92,30 +101,57 @@ const liPadding: React.CSSProperties = { padding: 6 };
 
 function sevBadge(s: 'low' | 'med' | 'high'): React.CSSProperties {
   const colour = s === 'high' ? 'var(--brick)' : s === 'med' ? 'var(--warm)' : 'var(--ink-2)';
-  return { background: 'transparent', color: colour, borderColor: colour };
+  return {
+    display: 'inline-block',
+    fontSize: 11,
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    padding: '2px 8px',
+    borderRadius: 4,
+    border: `1px solid ${colour}`,
+    color: colour,
+    background: 'transparent',
+  };
 }
+
+// ─── Component ────────────────────────────────────────────────────────────
 
 export default function AIView() {
   const project = useProjectStore((s) => s.currentProject);
-  const [caps, setCaps] = useState<any[]>([]);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<AskResponse | null>(null);
   const [askPhase, setAskPhase] = useState<'idle' | 'asking'>('idle');
   const [diagnostics, setDiagnostics] = useState<Record<string, unknown>>({});
   const [loadingDiag, setLoadingDiag] = useState<string | null>(null);
 
-  useEffect(() => {
-    aiCapabilities().then((c: any) => setCaps(c?.capabilities ?? c ?? [])).catch(() => setCaps([]));
-  }, []);
-
-  async function ask() {
-    if (!project || !question.trim()) return;
+  async function ask(q?: string) {
+    const text = (q ?? question).trim();
+    if (!project || !text) return;
+    setQuestion(text);
     setAskPhase('asking');
     try {
-      setAnswer(await aiAsk(project.id, question.trim()));
+      setAnswer(await aiAsk(project.id, text));
     } catch (e: any) {
-      setAnswer({ answer: `Error: ${e?.message ?? e}. The AI feature requires MiMo v2.5 API access — confirm MIMO_API_KEY is configured in the backend.`, citations: [] });
-    } finally { setAskPhase('idle'); }
+      setAnswer({
+        answer: `Error: ${e?.message ?? e}. The AI feature requires MiMo v2.5 API access — confirm MIMO_API_KEY is configured in the backend.`,
+        citations: [],
+      });
+    } finally {
+      setAskPhase('idle');
+    }
+  }
+
+  function handleSeedClick(q: string) {
+    setQuestion(q);
+    ask(q);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      ask();
+    }
   }
 
   async function runDiagnostic(d: Diagnostic) {
@@ -126,114 +162,217 @@ export default function AIView() {
       setDiagnostics((prev) => ({ ...prev, [d.id]: data }));
     } catch (e: any) {
       setDiagnostics((prev) => ({ ...prev, [d.id]: { error: e?.message ?? String(e) } }));
-    } finally { setLoadingDiag(null); }
+    } finally {
+      setLoadingDiag(null);
+    }
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', height: '100%' }}>
-      <aside style={{ borderRight: '1px solid var(--rule-strong)', padding: '32px', overflow: 'auto' }}>
-        <div className="kicker" style={{ marginBottom: 12 }}>AI copilot</div>
-        <h2 className="display" style={{ fontSize: 36, fontWeight: 500, lineHeight: 1.05 }}>ask the<br /><em>estimate</em>.</h2>
-        <hr className="hr" style={{ margin: '24px 0' }} />
+    <div style={{ height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, flexShrink: 0 }}>
+        <div className="kicker" style={{ marginBottom: 8 }}>AI copilot</div>
+        <h2 className="display" style={{ fontSize: 36, fontWeight: 500, lineHeight: 1.05, margin: 0 }}>
+          ask the <em>estimate</em>
+        </h2>
+      </div>
 
-        <div>
-          <div className="kicker" style={{ marginBottom: 8 }}>Ask</div>
+      {/* ── Chat input (centered, full-width) ──────────────────────── */}
+      <div style={{ maxWidth: 640, width: '100%', margin: '0 auto', padding: '20px 32px 0', flexShrink: 0 }}>
+        <div className="paper" style={{ padding: 16, borderRadius: 12 }}>
           <textarea
             className="field"
             placeholder="What do you want to know about this estimate?"
-            rows={3}
+            rows={2}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            style={{ resize: 'vertical', fontFamily: 'var(--font-body)' }}
+            onKeyDown={handleKeyDown}
+            style={{
+              resize: 'none',
+              fontFamily: 'var(--font-body)',
+              width: '100%',
+              boxSizing: 'border-box',
+              border: 'none',
+              background: 'transparent',
+              outline: 'none',
+              fontSize: 15,
+              padding: '4px 0',
+            }}
           />
-          <button className="btn btn-primary" style={{ marginTop: 10, width: '100%', justifyContent: 'center' }}
-            type="button" onClick={ask} disabled={askPhase === 'asking' || !question.trim()}>
-            {askPhase === 'asking' ? 'Thinking…' : 'Run ⌘↵'}
-          </button>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 16 }}>
-            {SEED_QUESTIONS.map((q) => (
-              <button key={q} className="badge draft" style={{
-                background: 'var(--paper)', color: 'var(--draft)', borderColor: 'var(--draft)',
-                cursor: 'pointer', fontSize: 11, padding: '4px 10px', textTransform: 'none',
-                letterSpacing: 'normal', fontWeight: 500,
-              }}
-                type="button"
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--accent)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--paper)'; }}
-                onClick={() => setQuestion(q)}>
-                {q}
-              </button>
-            ))}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={() => ask()}
+              disabled={askPhase === 'asking' || !question.trim()}
+              style={{ borderRadius: 8, padding: '8px 20px' }}
+            >
+              {askPhase === 'asking' ? 'Thinking…' : 'Ask ⌘↵'}
+            </button>
           </div>
         </div>
+      </div>
 
-        <hr className="hr" style={{ margin: '24px 0' }} />
+      {/* ── Suggestion chips (horizontal scroll) ──────────────────── */}
+      <div style={{ flexShrink: 0, padding: '16px 32px 0' }}>
+        <div
+          style={{
+            maxWidth: 640,
+            margin: '0 auto',
+            display: 'flex',
+            gap: 8,
+            overflowX: 'auto',
+            paddingBottom: 4,
+            scrollbarWidth: 'thin',
+          }}
+        >
+          {SEED_QUESTIONS.map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => handleSeedClick(q)}
+              style={{
+                flexShrink: 0,
+                background: 'var(--paper)',
+                color: 'var(--draft)',
+                border: '1px solid var(--rule)',
+                borderRadius: 20,
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 500,
+                padding: '6px 14px',
+                whiteSpace: 'nowrap',
+                transition: 'background 0.15s, border-color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--accent)';
+                e.currentTarget.style.borderColor = 'var(--accent)';
+                e.currentTarget.style.color = 'var(--paper)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--paper)';
+                e.currentTarget.style.borderColor = 'var(--rule)';
+                e.currentTarget.style.color = 'var(--draft)';
+              }}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <div className="kicker" style={{ marginBottom: 8 }}>Capabilities</div>
-        {caps.length === 0 ? (
-          <div className="muted" style={{ fontSize: 12 }}>Loading capabilities from <code>/ai/capabilities</code>…</div>
+      {/* ── Answer area ───────────────────────────────────────────── */}
+      <div style={{ maxWidth: 640, width: '100%', margin: '24px auto 0', padding: '0 32px', flex: 1 }}>
+        {!answer ? (
+          <div
+            className="display"
+            style={{
+              fontSize: 18,
+              fontStyle: 'italic',
+              color: 'var(--ink-3)',
+              textAlign: 'center',
+              padding: '48px 0',
+            }}
+          >
+            <em>ask something</em> above to get started.
+          </div>
         ) : (
-          caps.map((c: any) => (
-            <div key={c.endpoint} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', borderBottom: '1px solid var(--rule)' }}>
-              <span className={`dot ${c.available ? 'dot-active' : 'dot-pending'}`} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 500 }}>{c.name}</div>
-                <div className="kicker" style={{ color: 'var(--ink-3)', textTransform: 'none', letterSpacing: 0 }}>{c.description}</div>
-              </div>
+          <div className="paper" style={{ padding: 24, borderRadius: 12, animation: 'draw-in 0.3s ease' }}>
+            {/* ── Answer text with whitespace preserved ── */}
+            <div
+              style={{
+                fontSize: 15,
+                lineHeight: 1.7,
+                fontFamily: 'var(--font-display)',
+                fontWeight: 400,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}
+            >
+              {answer.answer}
             </div>
-          ))
-        )}
-      </aside>
 
-      <div style={{ padding: '32px', overflow: 'auto' }}>
-        <div className="draw-in">
-          <section style={{ marginBottom: 32 }}>
-            <div className="kicker" style={{ marginBottom: 8 }}>Answer</div>
-            {!answer ? (
-              <div className="display" style={{ fontSize: 28, fontStyle: 'italic', color: 'var(--ink-3)' }}><em>ask something</em> on the left.</div>
-            ) : (
-              <div className="paper" style={{ padding: 24 }}>
-                <div style={{ fontSize: 16, lineHeight: 1.6, fontFamily: 'var(--font-display)', fontWeight: 400 }}>{answer.answer}</div>
-                {answer.citations && answer.citations.length > 0 && (
-                  <div style={{ marginTop: 16, borderTop: '1px solid var(--rule)', paddingTop: 12 }}>
-                    <div className="kicker" style={{ marginBottom: 6 }}>Sources</div>
-                    {answer.citations.map((c, i) => (
-                      <div key={i} style={{ fontSize: 12, marginBottom: 4 }}>
-                        <span className="num muted">#{i + 1}</span>
-                        {c.trade && <span className="badge" style={{ marginRight: 6 }}>{c.trade}</span>}
-                        {c.quote && <span style={{ color: 'var(--ink-2)' }}>{c.quote}</span>}
-                      </div>
-                    ))}
+            {/* ── Citations ── */}
+            {answer.citations && answer.citations.length > 0 && (
+              <div style={{ marginTop: 16, borderTop: '1px solid var(--rule)', paddingTop: 12 }}>
+                <div className="kicker" style={{ marginBottom: 6 }}>Sources</div>
+                {answer.citations.map((c, i) => (
+                  <div key={i} style={{ fontSize: 12, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="num muted">#{i + 1}</span>
+                    {c.trade && <span className="badge" style={{ fontSize: 11 }}>{c.trade}</span>}
+                    {c.quote && <span style={{ color: 'var(--ink-2)' }}>{c.quote}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── 3 Analysis cards at bottom ────────────────────────────── */}
+      <div
+        style={{
+          maxWidth: 960,
+          width: '100%',
+          margin: '32px auto 32px',
+          padding: '0 32px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 16,
+          flexShrink: 0,
+        }}
+      >
+        {DIAGNOSTICS.map((d) => {
+          const data = diagnostics[d.id] as Parameters<typeof d.render>[0] | undefined;
+          const isError = data && 'error' in (data as any);
+          return (
+            <section key={d.id} className="paper" style={{ padding: 16, borderRadius: 12, display: 'flex', flexDirection: 'column' }}>
+              {/* Card header */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 20 }}>{d.icon}</span>
+                  <div>
+                    <div className="kicker" style={{ marginBottom: 0 }}>{d.kicker}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, marginTop: 1 }}>{d.title}</div>
+                  </div>
+                </div>
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  onClick={() => runDiagnostic(d)}
+                  disabled={loadingDiag === d.id}
+                  style={{ padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, flexShrink: 0 }}
+                >
+                  {loadingDiag === d.id ? '…' : 'Run'}
+                </button>
+              </div>
+
+              <hr className="hr" style={{ marginBottom: 12, marginTop: 0 }} />
+
+              {/* Card body */}
+              <div style={{ flex: 1, overflow: 'auto' }}>
+                {isError ? (
+                  <div style={{ fontSize: 12, color: 'var(--brick)', padding: 6 }}>
+                    {(data as any).error}
+                  </div>
+                ) : data ? (
+                  d.render(data)
+                ) : (
+                  <div className="muted" style={{ fontSize: 12, textAlign: 'center', padding: '16px 0' }}>
+                    Click <strong>Run</strong> to populate.
                   </div>
                 )}
               </div>
-            )}
-          </section>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-            {DIAGNOSTICS.map((d) => {
-              const data = diagnostics[d.id] as Parameters<typeof d.render>[0] | undefined;
-              return (
-                <section key={d.id} className="paper" style={{ padding: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div>
-                      <div className="kicker">{d.kicker}</div>
-                      <div className="display" style={{ fontSize: 22, fontWeight: 500, marginTop: 2 }}>{d.title}</div>
-                    </div>
-                    <button className="btn btn-secondary" type="button"
-                      onClick={() => runDiagnostic(d)} disabled={loadingDiag === d.id}
-                      style={{ padding: '6px 12px' }}>
-                      {loadingDiag === d.id ? '…' : 'Run'}
-                    </button>
-                  </div>
-                  <hr className="hr" style={{ marginBottom: 12 }} />
-                  {data ? d.render(data) : <div className="muted" style={{ fontSize: 12 }}>Run to populate.</div>}
-                </section>
-              );
-            })}
-          </div>
-        </div>
+            </section>
+          );
+        })}
       </div>
     </div>
   );

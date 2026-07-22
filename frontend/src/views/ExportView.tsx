@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useProjectStore, selectProjectTotal } from '../store';
+import { fetchBOQ } from '../api/boq';
 import { generateProposal, generateExport, generatePurchaseList, generateClientPresentation, listExports } from '../api/exports';
 import Empty from '../components/Empty';
 import { formatINR, fmtDateTime } from '../ui/format';
@@ -29,13 +30,15 @@ export default function ExportView() {
   const project = useProjectStore((s) => s.currentProject);
   const total = useProjectStore(selectProjectTotal);
   const boqItems = useProjectStore((s) => s.boqItems);
+  const setBoqItems = useProjectStore((s) => s.setBoqItems);
   const [busy, setBusy] = useState<string | null>(null);
   const [history, setHistory] = useState<any[]>([]);
 
   useEffect(() => {
     if (!project) return;
     listExports(project.id).then(setHistory).catch(() => setHistory([]));
-  }, [project?.id]);
+    fetchBOQ(project.id).then((boq) => { if (boq?.trades) setBoqItems(boq.trades); }).catch(() => {});
+  }, [project?.id, setBoqItems]);
 
   async function run(d: Deliverable) {
     if (!project) return;

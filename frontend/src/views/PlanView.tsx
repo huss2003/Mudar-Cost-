@@ -212,6 +212,10 @@ function DrawingRow({ d, active, onClick }: { d: Drawing; active: boolean; onCli
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Plan2D — 2-D viewer with demo floor plan fallback
+   ───────────────────────────────────────────────────────────────────────── */
+
 function Plan2D({ objects, selectedId, onSelect, drawingUrl }:
   { objects: DetectedObject[]; selectedId: number | null; onSelect: (id: number | null) => void; drawingUrl: string | null }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -253,18 +257,9 @@ function Plan2D({ objects, selectedId, onSelect, drawingUrl }:
     return { scale, ox, oy };
   }, [scaledObjects, size]);
 
+  /* ── Demo floor-plan when no real objects exist ──────────────────────── */
   if (!scaledObjects.length || !projection) {
-    return (
-      <div ref={containerRef} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', textAlign: 'center' }}>
-        <div>
-          <div style={{ width: 80, height: 80, border: '1px dashed var(--rule-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', background: 'var(--paper)' }}>
-            <svg width="36" height="36" viewBox="0 0 32 32" fill="none"><path d="M6 26 L11 16 L17 24 L26 8" stroke="var(--ink-3)" strokeWidth="1.5" fill="none" /></svg>
-          </div>
-          <div className="kicker">Awaiting plan</div>
-          <div className="display" style={{ fontSize: 22, fontStyle: 'italic', marginTop: 4 }}>drop a drawing to begin</div>
-        </div>
-      </div>
-    );
+    return <DemoFloorPlan containerRef={containerRef} onSelect={onSelect} />;
   }
 
   const legend = [
@@ -365,6 +360,203 @@ function Plan2D({ objects, selectedId, onSelect, drawingUrl }:
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   DemoFloorPlan — SVG office layout shown when no real objects exist
+   ───────────────────────────────────────────────────────────────────────── */
+
+function DemoFloorPlan({ containerRef, onSelect }: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  onSelect: (id: number | null) => void;
+}) {
+  const W = 15000, H = 10000;
+
+  /* colour constants matching the legend */
+  const wallC = '#1A1815';
+  const partC = '#1B4D7E';
+  const doorC = '#B8501F';
+  const furnC = '#5A574E';
+  const fills = ['rgba(237,234,225,0.12)', 'rgba(237,234,225,0.06)', 'rgba(200,220,240,0.08)', 'rgba(200,220,240,0.14)'];
+
+  /* ── room definitions ──────────────────────────────────────────────── */
+  const rooms = [
+    { name: 'Reception',              x: 200,  y: 200,  w: 4800, h: 3800, lx: 2600, ly: 1600, fi: 0 },
+    { name: 'Waiting Area',           x: 200,  y: 2400, w: 4800, h: 1600, lx: 2600, ly: 3300, fi: 1 },
+    { name: 'Meeting Room\n10pax',    x: 5000, y: 200,  w: 4000, h: 3800, lx: 7000, ly: 1900, fi: 2 },
+    { name: 'Meeting Room\n6pax',     x: 9000, y: 200,  w: 3200, h: 3800, lx: 10600,ly: 1900, fi: 3 },
+    { name: 'Phone\nBooth 1',        x: 12200,y: 200,  w: 2600, h: 1900, lx: 13500,ly: 1050, fi: 0 },
+    { name: 'Phone\nBooth 2',        x: 12200,y: 2100, w: 2600, h: 1900, lx: 13500,ly: 2950, fi: 1 },
+    { name: 'Cabin-1',               x: 200,  y: 4000, w: 3300, h: 3000, lx: 1850, ly: 5500, fi: 2 },
+    { name: 'Cabin-2',               x: 3500, y: 4000, w: 3000, h: 3000, lx: 5000, ly: 5500, fi: 3 },
+    { name: 'Cabin-3',               x: 6500, y: 4000, w: 3000, h: 3000, lx: 8000, ly: 5500, fi: 0 },
+    { name: 'Cabin-4',               x: 9500, y: 4000, w: 2700, h: 3000, lx: 10850,ly: 5500, fi: 1 },
+    { name: 'Discussion\nBooth',     x: 12200,y: 4000, w: 2600, h: 3000, lx: 13500,ly: 5500, fi: 2 },
+    { name: 'Workstations',          x: 200,  y: 7000, w: 6300, h: 3000, lx: 3350, ly: 8500, fi: 3 },
+    { name: 'Pantry',                x: 6500, y: 7000, w: 3000, h: 1500, lx: 8000, ly: 7750, fi: 0 },
+    { name: 'Cafeteria',             x: 9500, y: 7000, w: 2700, h: 1500, lx: 10850,ly: 7750, fi: 1 },
+    { name: 'Server\nRoom',          x: 6500, y: 8500, w: 3000, h: 1500, lx: 8000, ly: 9300, fi: 2 },
+    { name: 'Store\nRoom',           x: 9500, y: 8500, w: 2700, h: 1500, lx: 10850,ly: 9300, fi: 3 },
+    { name: 'Ladies\nToilet',        x: 12200,y: 7000, w: 2600, h: 1500, lx: 13500,ly: 7750, fi: 0 },
+    { name: 'Gents\nToilet',         x: 12200,y: 8500, w: 2600, h: 1500, lx: 13500,ly: 9300, fi: 1 },
+  ];
+
+  /* ── interior wall segments [x1, y1, x2, y2] ──────────────────────── */
+  const walls: [number, number, number, number][] = [
+    /* horizontal partitions */
+    [200, 4000, 14800, 4000],
+    [200, 7000, 14800, 7000],
+    [6500, 8500, 14800, 8500],
+    [12200, 2100, 14800, 2100],
+    /* vertical partitions — row 1 */
+    [5000, 200, 5000, 4000],
+    [9000, 200, 9000, 4000],
+    [12200, 200, 12200, 4000],
+    /* vertical partitions — row 2 */
+    [3500, 4000, 3500, 7000],
+    [6500, 4000, 6500, 7000],
+    [9500, 4000, 9500, 7000],
+    [12200, 4000, 12200, 7000],
+    /* vertical partitions — row 3 */
+    [6500, 7000, 6500, 10000],
+    [9500, 7000, 9500, 10000],
+    [12200, 7000, 12200, 10000],
+  ];
+
+  /* ── door arcs (quarter-circle, r = 800 mm) ───────────────────────── */
+  const doorPaths = [
+    'M 2600 3200 A 800 800 0 0 1 3400 4000',
+    'M 7000 3200 A 800 800 0 0 1 7800 4000',
+    'M 10600 3200 A 800 800 0 0 1 11400 4000',
+    'M 13500 3200 A 800 800 0 0 1 14300 4000',
+    'M 4300 5400 A 800 800 0 0 1 3500 6200',
+    'M 7300 5400 A 800 800 0 0 1 6500 6200',
+    'M 10300 5400 A 800 800 0 0 1 9500 6200',
+    'M 13000 5400 A 800 800 0 0 1 12200 6200',
+    'M 3350 6200 A 800 800 0 0 1 4150 7000',
+    'M 8000 6200 A 800 800 0 0 1 8800 7000',
+    'M 13500 6200 A 800 800 0 0 1 14300 7000',
+  ];
+
+  /* ── furniture pieces ──────────────────────────────────────────────── */
+  const furn = [
+    /* Reception desk */
+    { x: 800, y: 500, w: 3200, h: 600 },
+    /* Waiting-area chairs */
+    { x: 500, y: 2700, w: 500, h: 500 }, { x: 1300, y: 2700, w: 500, h: 500 }, { x: 2100, y: 2700, w: 500, h: 500 },
+    { x: 500, y: 3400, w: 500, h: 500 }, { x: 1300, y: 3400, w: 500, h: 500 }, { x: 2100, y: 3400, w: 500, h: 500 },
+    /* Meeting 10pax table */
+    { x: 5800, y: 1100, w: 2400, h: 1400 },
+    /* Meeting 6pax table */
+    { x: 9800, y: 1300, w: 1600, h: 1000 },
+    /* Phone-booth desks */
+    { x: 13000, y: 600, w: 800, h: 500 }, { x: 13000, y: 2500, w: 800, h: 500 },
+    /* Cabin desks */
+    { x: 600, y: 5600, w: 2000, h: 600 }, { x: 3800, y: 5600, w: 2000, h: 600 },
+    { x: 6800, y: 5600, w: 2000, h: 600 }, { x: 9800, y: 5600, w: 1800, h: 600 },
+    /* Discussion booth table */
+    { x: 12800, y: 5200, w: 1400, h: 1000 },
+    /* Workstation rows */
+    { x: 600, y: 7300, w: 2400, h: 400 }, { x: 3400, y: 7300, w: 2400, h: 400 },
+    { x: 600, y: 8100, w: 2400, h: 400 }, { x: 3400, y: 8100, w: 2400, h: 400 },
+    { x: 600, y: 8900, w: 2400, h: 400 }, { x: 3400, y: 8900, w: 2400, h: 400 },
+    /* Server racks */
+    { x: 6800, y: 8800, w: 400, h: 1200 }, { x: 7400, y: 8800, w: 400, h: 1200 }, { x: 8000, y: 8800, w: 400, h: 1200 },
+    /* Pantry counter */
+    { x: 6800, y: 7200, w: 2400, h: 400 },
+    /* Cafeteria tables */
+    { x: 9800, y: 7200, w: 800, h: 800 }, { x: 11000, y: 7200, w: 800, h: 800 },
+    /* Store shelves */
+    { x: 9800, y: 8800, w: 2000, h: 400 },
+  ];
+
+  const legendItems = [
+    { cls: 'wall',      stroke: wallC,  shape: { w: 12, h: 4, type: 'rect'  as const } },
+    { cls: 'partition', stroke: partC,  shape: { w: 12, h: 4, type: 'dash'  as const } },
+    { cls: 'door',      stroke: doorC,  shape: { w: 12, h: 4, type: 'rect'  as const } },
+    { cls: 'furniture', stroke: furnC,  shape: { w: 12, h: 4, type: 'rect'  as const } },
+  ];
+
+  return (
+    <div ref={containerRef} style={{ position: 'absolute', inset: 0 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet"
+        style={{ width: '100%', height: '100%', display: 'block' }}
+        onClick={(e) => { if (e.target === e.currentTarget) onSelect(null); }}>
+        <defs>
+          <pattern id="grid5" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
+            <circle cx="0.5" cy="0.5" r="0.5" fill="var(--rule-strong)" />
+          </pattern>
+        </defs>
+        <rect width={W} height={H} fill="url(#grid5)" opacity={0.35} />
+
+        {/* Room fills */}
+        {rooms.map((r, i) => (
+          <rect key={`rf${i}`} x={r.x} y={r.y} width={r.w} height={r.h}
+            fill={fills[r.fi]} stroke="none" />
+        ))}
+
+        {/* Exterior walls */}
+        <rect x="200" y="200" width="14600" height="9600"
+          fill="none" stroke={wallC} strokeWidth="200" />
+
+        {/* Interior partition walls */}
+        {walls.map(([x1, y1, x2, y2], i) => (
+          <line key={`wl${i}`} x1={x1} y1={y1} x2={x2} y2={y2}
+            stroke={partC} strokeWidth="100" />
+        ))}
+
+        {/* Door arcs */}
+        {doorPaths.map((d, i) => (
+          <path key={`dr${i}`} d={d} fill="none" stroke={doorC}
+            strokeWidth="60" strokeLinecap="round" />
+        ))}
+
+        {/* Furniture */}
+        {furn.map((f, i) => (
+          <rect key={`fn${i}`} x={f.x} y={f.y} width={f.w} height={f.h}
+            fill="rgba(90,87,78,0.12)" stroke={furnC} strokeWidth="50" rx={80} />
+        ))}
+
+        {/* Room labels */}
+        {rooms.map((r, i) => (
+          <text key={`lb${i}`} x={r.lx} y={r.ly}
+            textAnchor="middle" dominantBaseline="central"
+            fontFamily="var(--font-body)" fontSize="350" fontWeight="500"
+            fill="var(--ink-2)" style={{ pointerEvents: 'none' }}>
+            {r.name.split('\n').map((line, j) => (
+              <tspan key={j} x={r.lx} dy={j === 0 ? 0 : 420}>{line}</tspan>
+            ))}
+          </text>
+        ))}
+
+        {/* Dimension scale bar */}
+        <line x1="200" y1="9900" x2="5200" y2="9900" stroke="var(--ink-3)" strokeWidth="40" />
+        <line x1="200" y1="9850" x2="200"   y2="9950" stroke="var(--ink-3)" strokeWidth="40" />
+        <line x1="5200" y1="9850" x2="5200" y2="9950" stroke="var(--ink-3)" strokeWidth="40" />
+        <text x="2700" y="9830" textAnchor="middle" fontFamily="var(--font-mono)"
+          fontSize="220" fill="var(--ink-3)">3,000 mm</text>
+      </svg>
+
+      {/* Legend */}
+      <div style={{
+        position: 'absolute', left: 12, bottom: 12,
+        background: 'var(--paper)', border: '1px solid var(--rule-strong)',
+        padding: '12px 14px', fontSize: 11,
+      }}>
+        <div className="kicker" style={{ marginBottom: 6 }}>Legend</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 10px' }}>
+          {legendItems.map((l) => (
+            <Row key={l.cls} shape={l.shape} stroke={l.stroke}
+              label={l.cls.charAt(0).toUpperCase() + l.cls.slice(1)} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Legend row helper
+   ───────────────────────────────────────────────────────────────────────── */
+
 function Row({ shape, stroke, label }: { shape: { w: number; h: number; type: 'rect' | 'dash' | 'accent' }; stroke: string; label: string }) {
   const color = shape.type === 'accent' ? 'var(--accent)' : stroke;
   const dash = shape.type === 'dash' ? '6,4' : undefined;
@@ -381,8 +573,11 @@ function Row({ shape, stroke, label }: { shape: { w: number; h: number; type: 'r
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Plan3D — 3-D viewer with demo office fallback
+   ───────────────────────────────────────────────────────────────────────── */
+
 function Plan3D({ objects, onSelect }: { objects: DetectedObject[]; onSelect: (id: number | null) => void }) {
-  /* Convert normalised 0-1 bbox coordinates to mm scale */
   const scaledObjects = useMemo(() =>
     objects.map((o) => ({
       ...o,
@@ -393,36 +588,132 @@ function Plan3D({ objects, onSelect }: { objects: DetectedObject[]; onSelect: (i
     })),
   [objects]);
 
+  const hasObjects = objects.length > 0;
+
   return (
     <Canvas shadows camera={{ position: [12, 10, 12], fov: 45 }} style={{ background: 'var(--paper)' }}>
       <ambientLight intensity={0.6} />
       <directionalLight position={[15, 22, 10]} intensity={1.1} castShadow />
       <directionalLight position={[-12, 6, -10]} intensity={0.4} />
 
+      {/* Floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[40, 40]} />
-        <meshStandardMaterial color="var(--paper-2)" />
+        <planeGeometry args={[hasObjects ? 40 : 16, hasObjects ? 40 : 11]} />
+        <meshStandardMaterial color={hasObjects ? 'var(--paper-2)' : '#D7D2C2'} />
       </mesh>
 
-      {scaledObjects.slice(0, 80).map((o, i) => {
-        const scale = 0.04;
-        const x = (o.bbox_x - 5000) * scale + (i % 8 - 4) * 1.2;
-        const z = (o.bbox_y - 5000) * scale + (Math.floor(i / 8) - 4) * 1.2;
-        const w = Math.max(0.5, o.length * scale);
-        const d = Math.max(0.5, o.width * scale);
-        const s = OBJECT_STYLE[categorizeObjectType(o.object_type)];
-        const h = Math.max(0.5, s.height3d);
-        return (
-          <mesh key={o.id} position={[x, h / 2, z]} castShadow receiveShadow
-            onClick={(e) => { e.stopPropagation(); onSelect(o.id); }}>
-            <boxGeometry args={[w, h, d]} />
-            <meshStandardMaterial color={s.tone} roughness={0.6} metalness={0.05} />
+      {hasObjects ? (
+        /* ── Real detected objects ────────────────────────────────────── */
+        scaledObjects.slice(0, 80).map((o, i) => {
+          const scale = 0.04;
+          const x = (o.bbox_x - 5000) * scale + (i % 8 - 4) * 1.2;
+          const z = (o.bbox_y - 5000) * scale + (Math.floor(i / 8) - 4) * 1.2;
+          const w = Math.max(0.5, o.length * scale);
+          const d = Math.max(0.5, o.width * scale);
+          const s = OBJECT_STYLE[categorizeObjectType(o.object_type)];
+          const h = Math.max(0.5, s.height3d);
+          return (
+            <mesh key={o.id} position={[x, h / 2, z]} castShadow receiveShadow
+              onClick={(e) => { e.stopPropagation(); onSelect(o.id); }}>
+              <boxGeometry args={[w, h, d]} />
+              <meshStandardMaterial color={s.tone} roughness={0.6} metalness={0.05} />
+            </mesh>
+          );
+        })
+      ) : (
+        /* ── Demo 3-D office ──────────────────────────────────────────── */
+        <>
+          {/* Perimeter walls */}
+          <DemoWall pos={[0, 1.3, -5]}    size={[15, 2.6, 0.15]} />
+          <DemoWall pos={[0, 1.3, 5]}     size={[15, 2.6, 0.15]} />
+          <DemoWall pos={[-7.5, 1.3, 0]}  size={[0.15, 2.6, 10]} />
+          <DemoWall pos={[7.5, 1.3, 0]}   size={[0.15, 2.6, 10]} />
+
+          {/* Horizontal partitions (z ≈ row dividers) */}
+          <DemoWall pos={[0, 1.25, -1]}     size={[15, 2.5, 0.08]} />
+          <DemoWall pos={[0, 1.25, 2]}      size={[15, 2.5, 0.08]} />
+          <DemoWall pos={[10.65, 1.25, 3.5]} size={[8.3, 2.5, 0.08]} />
+
+          {/* Vertical partitions — row 1 (front) */}
+          <DemoWall pos={[-2.5, 1.25, -3]} size={[0.08, 2.5, 4]} />
+          <DemoWall pos={[1.5, 1.25, -3]}  size={[0.08, 2.5, 4]} />
+          <DemoWall pos={[4.7, 1.25, -3]}  size={[0.08, 2.5, 4]} />
+
+          {/* Vertical partitions — row 2 (middle) */}
+          <DemoWall pos={[-4, 1.25, 0.5]}  size={[0.08, 2.5, 3]} />
+          <DemoWall pos={[-1, 1.25, 0.5]}  size={[0.08, 2.5, 3]} />
+          <DemoWall pos={[2, 1.25, 0.5]}   size={[0.08, 2.5, 3]} />
+          <DemoWall pos={[4.7, 1.25, 0.5]} size={[0.08, 2.5, 3]} />
+
+          {/* Vertical partitions — row 3 (back) */}
+          <DemoWall pos={[-1, 1.25, 3.5]}  size={[0.08, 2.5, 3]} />
+          <DemoWall pos={[2, 1.25, 3.5]}   size={[0.08, 2.5, 3]} />
+          <DemoWall pos={[4.7, 1.25, 3.5]} size={[0.08, 2.5, 3]} />
+
+          {/* Furniture — reception desk */}
+          <DemoFurn pos={[-5.2, 0.35, -4.1]} size={[3, 0.7, 0.6]} />
+
+          {/* Meeting tables */}
+          <DemoFurn pos={[-0.5, 0.4, -3.2]} size={[2, 0.8, 1.2]} />
+          <DemoFurn pos={[3, 0.4, -3.2]}    size={[1.4, 0.8, 0.8]} />
+
+          {/* Cabin desks */}
+          <DemoFurn pos={[-5.5, 0.35, 0.5]} size={[1.8, 0.7, 0.6]} />
+          <DemoFurn pos={[-3, 0.35, 0.5]}   size={[1.8, 0.7, 0.6]} />
+          <DemoFurn pos={[0.5, 0.35, 0.5]}  size={[1.8, 0.7, 0.6]} />
+          <DemoFurn pos={[3.5, 0.35, 0.5]}  size={[1.6, 0.7, 0.6]} />
+
+          {/* Workstation desks */}
+          <DemoFurn pos={[-5, 0.35, 3]}   size={[2.4, 0.7, 0.4]} />
+          <DemoFurn pos={[-2, 0.35, 3]}   size={[2.4, 0.7, 0.4]} />
+          <DemoFurn pos={[-5, 0.35, 4]}   size={[2.4, 0.7, 0.4]} />
+          <DemoFurn pos={[-2, 0.35, 4]}   size={[2.4, 0.7, 0.4]} />
+
+          {/* Server racks */}
+          <mesh position={[0, 0.6, 4.2]} castShadow receiveShadow>
+            <boxGeometry args={[0.4, 1.2, 1]} />
+            <meshStandardMaterial color="#1A1815" roughness={0.5} metalness={0.3} />
           </mesh>
-        );
-      })}
+          <mesh position={[0.6, 0.6, 4.2]} castShadow receiveShadow>
+            <boxGeometry args={[0.4, 1.2, 1]} />
+            <meshStandardMaterial color="#1A1815" roughness={0.5} metalness={0.3} />
+          </mesh>
+          <mesh position={[1.2, 0.6, 4.2]} castShadow receiveShadow>
+            <boxGeometry args={[0.4, 1.2, 1]} />
+            <meshStandardMaterial color="#1A1815" roughness={0.5} metalness={0.3} />
+          </mesh>
+
+          {/* Pantry counter */}
+          <DemoFurn pos={[0, 0.4, 2.8]} size={[2.4, 0.8, 0.4]} tone="#888888" />
+
+          {/* Cafeteria tables */}
+          <DemoFurn pos={[3, 0.35, 2.8]}  size={[0.8, 0.7, 0.8]} />
+          <DemoFurn pos={[4.2, 0.35, 2.8]} size={[0.8, 0.7, 0.8]} />
+        </>
+      )}
 
       <axesHelper args={[3]} position={[-12, 0, -12]} />
       <OrbitControls autoRotate autoRotateSpeed={0.4} enableDamping />
     </Canvas>
+  );
+}
+
+/* ── tiny helpers for the demo 3-D scene ────────────────────────────── */
+
+function DemoWall({ pos, size }: { pos: [number, number, number]; size: [number, number, number] }) {
+  return (
+    <mesh position={pos} castShadow receiveShadow>
+      <boxGeometry args={size} />
+      <meshStandardMaterial color="#F5F0E8" roughness={0.7} />
+    </mesh>
+  );
+}
+
+function DemoFurn({ pos, size, tone }: { pos: [number, number, number]; size: [number, number, number]; tone?: string }) {
+  return (
+    <mesh position={pos} castShadow receiveShadow>
+      <boxGeometry args={size} />
+      <meshStandardMaterial color={tone ?? '#5A574E'} roughness={0.6} metalness={0.05} />
+    </mesh>
   );
 }

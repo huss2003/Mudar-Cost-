@@ -11,10 +11,11 @@ export interface PollOpts {
   backoff?: boolean;
   onTick?: (status: string, attempts: number) => void;
 }
+export type PollStatus = 'processed' | 'detected' | 'error' | 'timeout';
 export async function pollDrawingUntilReady(
   drawingId: number,
   opts: PollOpts = {},
-): Promise<{ status: 'processed' | 'error' | 'timeout'; attempts: number; cancel: () => void }> {
+): Promise<{ status: PollStatus; attempts: number; cancel: () => void }> {
   const { attempts = 30, intervalMs = 1500, backoff = true, onTick } = opts;
   const ctrl = new AbortController();
   let tried = 0;
@@ -26,7 +27,7 @@ export async function pollDrawingUntilReady(
       const r = await client.get(`/drawings/${drawingId}/status`);
       const status = r.data?.status as string | undefined;
       onTick?.(status ?? 'unknown', tried);
-      if (status === 'processed' || status === 'error') {
+      if (status === 'processed' || status === 'detected' || status === 'error') {
         return { status, attempts: tried, cancel: ctrl.abort.bind(ctrl) };
       }
     } catch { /* swallow, retry */ }

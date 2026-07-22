@@ -202,7 +202,7 @@ function DrawingRow({ d, active, onClick }: { d: Drawing; active: boolean; onCli
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-        <span className={`dot ${status === 'processed' ? 'dot-active' : status === 'error' ? 'dot-error' : 'dot-pending'}`} />
+        <span className={`dot ${(status === 'processed' || status === 'detected') ? 'dot-active' : status === 'error' ? 'dot-error' : 'dot-pending'}`} />
       </div>
       <div className="kicker" style={{ marginTop: 2, color: active ? 'var(--accent-ink)' : 'var(--ink-3)', textTransform: 'capitalize' }}>
         {status} · {new Date(d.created_at).toLocaleDateString()}

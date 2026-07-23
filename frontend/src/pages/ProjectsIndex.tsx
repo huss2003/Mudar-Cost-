@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchProjects, createProject } from '../api/projects';
-import { uploadDrawing, replaceDrawingFile } from '../api/drawings';
+import { uploadDrawing } from '../api/drawings';
 import { pollDrawingUntilReady } from '../api/sse';
 import { convertPdfToImages } from '../utils/pdfToImage';
 import type { Project } from '../types';
@@ -49,30 +49,24 @@ export default function ProjectsIndex() {
       const projectName = file.name.replace(/\.[^.]+$/, '');
 
       if (isPdf(file)) {
-        // Step 1: Create project + upload PDF
-        setUploadPhase('Uploading PDF…');
-        setProgress({ current: 1, total: 4 });
-        const proj = await createProject({ name: projectName });
-        const res = await uploadDrawing(file, proj.id);
-        const drawingId = res.drawing_id;
-
-        // Step 2: Convert PDF → PNG (with progress)
+        // PDF flow: convert to PNG FIRST, then upload PNG directly (no double upload)
         setUploadPhase('Converting to PNG…');
-        setProgress({ current: 2, total: 4 });
+        setProgress({ current: 1, total: 3 });
         const pngFiles = await convertPdfToImages(file, 1.5, (page, total) => {
-          setProgress({ current: 2, total: 4, page, totalPages: total });
+          setProgress({ current: 1, total: 3, page, totalPages: total });
         });
         if (pngFiles.length === 0) throw new Error('PDF conversion produced no pages');
 
-        // Step 3: Upload PNG
-        setUploadPhase('Uploading PNG…');
-        setProgress({ current: 3, total: 4 });
-        await replaceDrawingFile(drawingId, pngFiles[0]);
+        // Upload PNG directly (single upload)
+        setUploadPhase('Uploading…');
+        setProgress({ current: 2, total: 3 });
+        const proj = await createProject({ name: projectName });
+        const res = await uploadDrawing(pngFiles[0], proj.id);
 
-        // Step 4: Detect
+        // Detect
         setUploadPhase('Detecting objects…');
-        setProgress({ current: 4, total: 4 });
-        await pollDrawingUntilReady(drawingId, { attempts: 60, intervalMs: 1000 });
+        setProgress({ current: 3, total: 3 });
+        await pollDrawingUntilReady(res.drawing_id, { attempts: 30, intervalMs: 1000 });
 
         nav(`/projects/${proj.id}/plan`);
       } else {
